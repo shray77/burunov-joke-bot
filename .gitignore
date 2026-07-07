@@ -27,3 +27,8 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# RAG artifacts (генерируются скриптами, не в git)
+data/chroma_db/
+data/jokes_clean.jsonl
+*.sqlite3

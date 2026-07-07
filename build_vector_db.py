@@ -30,11 +30,63 @@ def load_clean_jokes() -> list[dict]:
     return jokes
 
 
+def select_jokes_for_index(jokes: list[dict]) -> list[dict]:
+    """Выбирает подмножество для индексации, если стоит MAX_JOKES_FOR_INDEX.
+
+    Приоритет источников (чтобы контент был разнородный, а не только lib.ru):
+      1. anekdot.ru — готовые отдельные анекдоты, высокое качество
+      2. lib.ru — текстовые файлы, разбитые на абзацы
+      3. Крокодил + Anna's Archive — метаданные книг (для подсказок)
+    """
+    limit = getattr(config, "MAX_JOKES_FOR_INDEX", None)
+    if not limit or limit >= len(jokes):
+        return jokes
+
+    # Группируем по источнику
+    by_source: dict[str, list[dict]] = {"anekdot.ru": [], "lib.ru": [], "Крокодил": [], "Anna's Archive": []}
+    for j in jokes:
+        src = j.get("source", "")
+        if src in by_source:
+            by_source[src].append(j)
+        else:
+            by_source.setdefault("lib.ru", []).append(j)
+
+    # Распределяем лимит: 50% anekdot.ru, 40% lib.ru, 5% Крокодил, 5% Anna's Archive
+    quotas = {
+        "anekdot.ru": int(limit * 0.50),
+        "lib.ru": int(limit * 0.40),
+        "Крокодил": int(limit * 0.05),
+        "Anna's Archive": int(limit * 0.05),
+    }
+    # Если какой-то источник не дотянул до квоты — отдадим остаток lib.ru
+    selected: list[dict] = []
+    leftover = 0
+    for src, q in quotas.items():
+        pool = by_source.get(src, [])
+        take = min(q, len(pool))
+        selected.extend(pool[:take])
+        leftover += q - take
+    if leftover > 0:
+        # добавляем из lib.ru (там обычно много)
+        extra = by_source.get("lib.ru", [])[quotas["lib.ru"]:quotas["lib.ru"] + leftover]
+        selected.extend(extra)
+
+    print(f"  Лимит {limit}: выбрано {len(selected)} (из {len(jokes)})")
+    aa_count = sum(1 for j in selected if j.get('source') == "Anna's Archive")
+    print(f"    anekdot.ru: {sum(1 for j in selected if j.get('source')=='anekdot.ru')}")
+    print(f"    lib.ru:     {sum(1 for j in selected if j.get('source')=='lib.ru')}")
+    print(f"    Крокодил:   {sum(1 for j in selected if j.get('source')=='Крокодил')}")
+    print(f"    AA books:   {aa_count}")
+    return selected
+
+
 def build():
     jokes = load_clean_jokes()
     print(f"Загружено анекдотов: {len(jokes)}")
     if not jokes:
         raise RuntimeError("Нет анекдотов для индексации.")
+
+    jokes = select_jokes_for_index(jokes)
 
     print(f"Загружаю эмбеддер {config.EMBED_MODEL} ...")
     # device='cpu' — для хакатона стабильнее. Если есть CUDA, поменяй на 'cuda'.
@@ -43,11 +95,13 @@ def build():
     print("Считаю эмбеддинги (это разово, ~1-2 мин на 1000 анекдотов)...")
     t0 = time.time()
     texts = [config.EMBED_PASSAGE_PREFIX + j["embed_text"] for j in jokes]
+    # Маленький batch + convert_to_numpy=True чтобы не раздувать память
     embeddings = model.encode(
         texts,
-        batch_size=32,
+        batch_size=8,
         show_progress_bar=True,
-        normalize_embeddings=True,  # e5 хочет нормализованные
+        normalize_embeddings=True,
+        convert_to_numpy=True,
     )
     print(f"Готово за {time.time() - t0:.1f} сек")
 

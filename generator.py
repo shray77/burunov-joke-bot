@@ -7,22 +7,86 @@ generator.py
   1. Установи Ollama: https://ollama.com
   2. ollama pull gemma3:4b   (или как у них Gemma 4 называется)
   3. ollama serve  (или она сама стартует)
+
+Если Ollama недоступен — fallback: берём топ-1 анекдот из retrieval
+и оборачиваем его в "буруновский" финальный коммент.
 """
+import re
+import random
+
 import httpx
 
 import config
+
+
+# ─── Fallback-стилизация (без LLM) ─────────────────────────────────────
+
+BURUNOV_INTROS = [
+    "Ну, слушай...",
+    "Так, значит...",
+    "Короче, дело было так...",
+    "Слышал я такую историю...",
+    "Ну, понимаешь...",
+    "Значит, так...",
+]
+
+BURUNOV_OUTROS = [
+    "Ну, ты понял...",
+    "Вот так вот...",
+    "Ну, бывает...",
+    "Хе-хе... ну, дальше сам додумаешь...",
+    "Такие дела, дорогой...",
+    "Ну, ты сам понимаешь...",
+]
+
+
+def _fallback_burunov(topic: str, jokes: list[dict]) -> str:
+    """Если Ollama недоступен — собираем ответ из топ-1 анекдота."""
+    if not jokes:
+        return (
+            "Хм... Не припомню я такого... "
+            "Может, помягче тему выберешь, а?"
+        )
+    top = jokes[0]
+    text = top["text"].strip()
+    # Чистим кодовские хвосты вида «17» / «1 Вася» (номера оригинала на anekdot.ru)
+    text = re.sub(r"\s+\d+\s*$", "", text)
+    text = re.sub(r"\s+\d+\s+Вася\s*$", "", text, flags=re.IGNORECASE)
+    # Лёгкая небрежность — заменяем некоторые знаки
+    text = text.replace("!", "...").replace("!!", "...")
+    intro = random.choice(BURUNOV_INTROS)
+    outro = random.choice(BURUNOV_OUTROS)
+    return f"{intro} {text} {outro}"
+
+
+# ─── Основной вызов Ollama ─────────────────────────────────────────────
+
+def _ollama_available() -> bool:
+    """Быстрая проверка — отвечает ли Ollama."""
+    try:
+        with httpx.Client(timeout=2.0) as c:
+            r = c.get(f"{config.OLLAMA_HOST}/api/tags")
+            return r.status_code == 200
+    except Exception:
+        return False
 
 
 def generate_burunov(topic: str, context_jokes: list[dict]) -> str:
     """
     Принимает тему + список анекдотов (из retriever).
     Возвращает текст, готовый для TTS.
+
+    Если Ollama недоступен — использует fallback.
     """
     if not context_jokes:
         return (
             "Хм... Не припомню я такого... "
             "Может, помягче тему выберешь, а?"
         )
+
+    # Проверяем Ollama
+    if not _ollama_available():
+        return _fallback_burunov(topic, context_jokes)
 
     # Собираем контекст — нумеруем анекдоты, чтобы LLM понимала где какой
     context_lines = []
@@ -73,7 +137,11 @@ if __name__ == "__main__":
         print("Ничего не нашли в базе.")
         sys.exit(0)
 
-    print("Генерирую в стиле Бурунова...\n")
+    if _ollama_available():
+        print("🟢 Ollama доступна — генерация через LLM...\n")
+    else:
+        print("🟡 Ollama недоступна — fallback-стилизация...\n")
+
     text = generate_burunov(topic, hits)
     print("─" * 60)
     print(text)
