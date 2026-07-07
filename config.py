@@ -9,6 +9,14 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+# ─── Режим TTS ─────────────────────────────────────────────────────────
+# "edge"   — Piper ONNX локально на G1 (CPU, real-time, без облака)
+# "server" — GPT-SoVITS на внешнем сервере с GPU (лучше клон, но нужен WiFi)
+TTS_MODE = "edge"
+
+# Адрес TTS-сервера (для server-режима)
+TTS_SERVER_HOST = "http://localhost:8001"
+
 # Сырой JSON от скраппера друга. Формат — список объектов:
 # [{"id": ..., "text": "...", "year": 1986, "tags": ["Штирлиц", ...]}, ...]
 RAW_JOKES_PATH = DATA_DIR / "jokes_raw.json"

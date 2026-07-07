@@ -1,0 +1,64 @@
+# Docker Compose для деплоя на Unitree G1
+# ─────────────────────────────────────────────────────────────────────
+# Запуск на самом роботе:
+#   docker compose up -d
+#
+# Ollama должна быть установлена на G1 отдельно (не в контейнере):
+#   curl -fsSL https://ollama.com/install.sh | sh
+#   ollama pull gemma3:4b
+#
+# Все данные (ChromaDB, модели TTS) — в volumes, переживают пересоздание.
+
+services:
+  rag:
+    build:
+      context: .
+      target: rag
+    container_name: burunov-rag
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - burunov-net
+
+  tts:
+    build:
+      context: .
+      target: tts
+    container_name: burunov-tts
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./models:/app/models
+      - ./cache_tts:/app/cache_tts
+    networks:
+      - burunov-net
+
+  # Robot controller — только если есть доступ к音频 и SDK
+  # Обычно запускается ВНЕ docker (нужен прямой доступ к audio + USB)
+  # Раскомментируй если хочешь всё в контейнерах (потребуется --device /dev/snd)
+  # robot:
+  #   build:
+  #     context: .
+  #     target: robot
+  #   container_name: burunov-robot
+  #   restart: "no"
+  #   devices:
+  #     - /dev/snd
+  #   network_mode: host
+  #   depends_on:
+  #     - rag
+  #     - tts
+  #   volumes:
+  #     - ./data:/app/data
+
+networks:
+  burunov-net:
+    driver: bridge
