@@ -36,26 +36,68 @@ from bs4 import BeautifulSoup
 BASE_URL = "https://ru.annas-archive.gl"
 SEARCH_PATH = "/search"
 
-# Поисковые запросы. Anna's Archive ищет по словам в именах файлов,
-# поэтому «1986» в запросе срабатывает — это самый надёжный путь.
+# Поисковые запросы. Anna's Archive ищет по словам в именах файлов и метаданных.
+# Расширение: советская тематика + персонажи + политические + перестройка.
 QUERIES = [
-    "сборник анекдотов 1986",
+    # === широкие запросы (контекст, фильтр позже) ===
+    "сборник анекдотов",
+    "анекдоты ссср",
+    "советские анекдоты",
+    "русские анекдоты",
+    "книга анекдотов",
+    # === по годам 1985-1990 ===
+    "анекдоты 1985",
     "анекдоты 1986",
-    "анекдот 1986",
-    "советские анекдоты 1986",
-    "анекдоты ссср 1986",
-    "сборник анекдотов",       # широкий запрос — фильтр позже
+    "анекдоты 1987",
+    "анекдоты 1988",
+    "анекдоты 1989",
+    "анекдоты 1990",
+    # === советские персонажи и темы ===
+    "анекдоты Штирлиц",
+    "анекдоты Вовочка",
+    "анекдоты Чапаев",
+    "анекдоты Петька",
+    "анекдоты Брежнев",
+    "анекдоты Ленин",
+    "анекдоты Сталин",
+    "анекдоты Райкин",
+    "анекдоты Хазанов",
+    "анекдоты Никулин",
+    # === политические / самиздат / ФИДО ===
+    "политический анекдот",
+    "Измозик анекдот",
+    "анекдоты ФИДО",
+    "анекдоты самиздат",
+    "советский фольклор анекдот",
+    "перестройка анекдоты",
+    "гласность анекдоты",
+    "анекдоты чекист",
+    "анекдоты КГБ",
+    "анекдоты партия",
+    # === серия «Анекдоты» (юнкор-пресс, 1991-1993,但还是 советские) ===
+    "Анекдоты Серия Ю",
+    "Библиотечка анекдотов",
+    "Коллекция анекдотов",
+    "золотые анекдоты",
+    # === журнальные источники (Крокодил, Шмель, Литературная газета) ===
+    "Крокодил журнал юмор",
+    "Шмель сатира",
+    # === забугорные samizdat-компиляции ===
+    "soviet joke",
+    "soviet anecdote",
+    "anekdot soviet",
+    "russian joke book",
 ]
 
-YEAR_FILTER = "1986"
-YEAR_RANGE = (1984, 1992)   # контекст: сборники анекдотов в СССР начали издаваться
-                           # только в перестройку (1987-1989) и в ранний постсоветский период
-MAX_PAGES_PER_QUERY = 10        # 50 результатов на страницу = до 500 на запрос
-DETAIL_CONCURRENCY = 20
-SEARCH_CONCURRENCY = 5
+YEAR_FILTER = "1985-1990"   # расширенный диапазон
+YEAR_RANGE = (1985, 1990)   # основной фильтр: только эти годы считать релевантными
+CONTEXT_YEAR_RANGE = (1984, 1993)  # расширенный контекст: перестройка + ранний постсовет
+MAX_PAGES_PER_QUERY = 20        # 50 результатов на страницу = до 1000 на запрос
+DETAIL_CONCURRENCY = 25         # увеличенный параллелизм
+SEARCH_CONCURRENCY = 8          # больше параллельных поисковых запросов
 REQUEST_TIMEOUT = 30.0
-OUTPUT_MD = Path("/home/z/my-project/download/anekdoty_1986.md")
-OUTPUT_JSON = OUTPUT_MD.with_suffix(".json")
+OUTPUT_MD = Path("/home/z/my-project/download/anekdoty_sssr_1985-1990.md")
+OUTPUT_JSON = Path("/home/z/my-project/download/anekdoty_sssr_1985-1990.json")
 OUTPUT_LOG = Path("/home/z/my-project/scripts/scraper.log")
 
 HEADERS = {
@@ -488,21 +530,25 @@ async def enrich_details(
 # ---------------------------------------------------------------------------
 
 def is_relevant(book: Book) -> bool:
-    """Книга релевантна, если про анекдоты И упоминает 1986 (как отдельный год)."""
+    """Книга релевантна, если про анекдоты И год в диапазоне 1985-1990."""
     primary = [book.title, book.author, " ".join(book.alt_filenames)]
     primary_blob = " \n ".join(primary).lower()
 
-    # 1. Анекдоты? (не в общем снапшоте — он одинаковый для всех строк на странице)
-    anekdot_keywords = ("анекдот", "анекдоты", "анекдотов", "шутк", "joke", "anekdot", "шутки")
+    # 1. Анекдоты?
+    anekdot_keywords = ("анекдот", "анекдоты", "анекдотов", "шутк", "joke", "anekdot", "шутки",
+                        "satire", "сатир", "фельетон", "humor", "юмор")
     if not any(k in primary_blob for k in anekdot_keywords):
         return False
 
-    # 2. Год 1986? Ищем как отдельное число (\b1986\b), не подстроку
-    if book.year == "1986":
+    # 2. Год в диапазоне 1985-1990?
+    if book.year and book.year.isdigit() and YEAR_RANGE[0] <= int(book.year) <= YEAR_RANGE[1]:
         return True
+    # явно год из диапазона в названии / имени файла
     for src in [book.title, *book.alt_filenames]:
-        if re.search(r"\b1986\b", src):
-            return True
+        for m in re.finditer(r"\b(19[5-9]\d|20[0-2]\d)\b", src):
+            y = int(m.group(1))
+            if YEAR_RANGE[0] <= y <= YEAR_RANGE[1]:
+                return True
     return False
 
 
@@ -510,8 +556,23 @@ def is_anekdot_book(book: Book) -> bool:
     """Книга про анекдоты (без фильтра по году) — для контекстного раздела."""
     primary = [book.title, book.author, " ".join(book.alt_filenames)]
     primary_blob = " \n ".join(primary).lower()
-    anekdot_keywords = ("анекдот", "анекдоты", "анекдотов", "шутк", "joke", "anekdot", "шутки")
+    anekdot_keywords = ("анекдот", "анекдоты", "анекдотов", "шутк", "joke", "anekdot", "шутки",
+                        "satire", "сатир", "фельетон", "humor", "юмор")
     return any(k in primary_blob for k in anekdot_keywords)
+
+
+def is_context_book(book: Book) -> bool:
+    """Книга про анекдоты И год в расширенном диапазоне 1984-1993 — для контекстного раздела."""
+    if not is_anekdot_book(book):
+        return False
+    if book.year and book.year.isdigit() and CONTEXT_YEAR_RANGE[0] <= int(book.year) <= CONTEXT_YEAR_RANGE[1]:
+        return True
+    for src in [book.title, *book.alt_filenames]:
+        for m in re.finditer(r"\b(19[5-9]\d|20[0-2]\d)\b", src):
+            y = int(m.group(1))
+            if CONTEXT_YEAR_RANGE[0] <= y <= CONTEXT_YEAR_RANGE[1]:
+                return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -523,14 +584,15 @@ def write_markdown(books: list[Book], all_books: list[Book], stats: dict[str, in
     OUTPUT_MD.parent.mkdir(parents=True, exist_ok=True)
     books_sorted = sorted(
         books,
-        key=lambda b: (0 if b.year == "1986" else 1, b.title.lower()),
+        key=lambda b: (b.year or "9999", b.title.lower()),
     )
     lines: list[str] = []
-    lines.append("# Сборники советских анекдотов — 1986 год\n")
+    lines.append("# Сборники советских анекдотов — 1985-1990 (перестройка)\n")
     lines.append(f"_Источник_: [{BASE_URL}]({BASE_URL})  ")
-    lines.append(f"_Найдено релевантных изданий_: **{len(books_sorted)}**\n")
+    lines.append(f"_Запросов_: {len(QUERIES)} | _Всего собрано_: {len(all_books)} | "
+                 f"_Релевантных 1985-1990_: **{len(books_sorted)}**\n")
     lines.append("## Статистика по запросам\n")
-    for q, n in stats.items():
+    for q, n in sorted(stats.items(), key=lambda x: -x[1]):
         lines.append(f"- `{q}`: {n} результатов")
     lines.append("")
     lines.append("---\n")
@@ -538,30 +600,30 @@ def write_markdown(books: list[Book], all_books: list[Book], stats: dict[str, in
     # Контекстный раздел: историческая справка
     lines.append("## Исторический контекст\n")
     lines.append(
-        "В СССР 1986 года **сборники анекдотов официально не издавались** — жанр "
-        "оставался неофициальным, распространялся устно и через самиздат. "
-        "Первые официальные сборники появляются только в позднюю перестройку "
-        "(1988–1989) и особенно активно — после 1991 года (Хазанов, Никулин, "
-        "Карцев, Ильченко). Поэтому фильтр ровно по 1986 году даёт мало результатов. "
-        "Ниже — все найденные по запросу книги, а также контекстный список "
-        "сборников анекдотов из индекса Anna's Archive (без фильтра по году)."
+        "Период **1985-1990** — это перестройка, гласность и распад СССР. В это время "
+        "политический анекдот выходит из подполья: появляются первые легальные сборники "
+        "(Измозик, Хазанов, Никулин), в прессе (\"Крокодил\", \"Литературная газета\", \"Юность\") "
+        "печатают фельетоны и подборки читательского юмора, а в ФИДО-сетях и самиздате "
+        "формируются огромные коллекции. Все указанные источники бесплатны на "
+        "Anna's Archive. Ниже — все найденные релевантные издания 1985-1990 годов, "
+        "а также контекстный список (1984-1993)."
     )
     lines.append("")
     lines.append("---\n")
 
-    # Основной раздел: релевантные книги 1986
-    lines.append(f"## Издания с упоминанием 1986 года ({len(books_sorted)})\n")
+    # Основной раздел: релевантные книги 1985-1990
+    lines.append(f"## Издания 1985-1990 годов ({len(books_sorted)})\n")
     if not books_sorted:
-        lines.append("_В индексе Anna's Archive не найдено ни одной книги, которая "
-                     "была бы и про анекдоты, и упоминала 1986 год._\n")
+        lines.append("_В индексе Anna's Archive не найдено книг, которые были бы и про анекдоты, "
+                     "и изданы строго в 1985-1990 годах._\n")
     else:
         for i, b in enumerate(books_sorted, 1):
             title = b.title or "(без названия)"
-            lines.append(f"### {i}. {title}\n")
+            lines.append(f"### {i}. [{b.year or '?'}] {title}\n")
             if b.author:
                 lines.append(f"- **Автор**: {b.author}")
-            if b.year:
-                lines.append(f"- **Год**: {b.year}")
+            if b.publisher:
+                lines.append(f"- **Издатель**: {b.publisher}")
             if b.language:
                 lines.append(f"- **Язык**: {b.language}")
             if b.format:
@@ -584,23 +646,44 @@ def write_markdown(books: list[Book], all_books: list[Book], stats: dict[str, in
             lines.append("")
     lines.append("---\n")
 
-    # Контекст: топ сборников анекдотов без фильтра по году
-    anekdot_books = [b for b in all_books if is_anekdot_book(b)]
-    anekdot_books.sort(key=lambda b: (b.year or "9999", b.title.lower()))
-    lines.append(f"## Контекст: все сборники анекдотов в индексе ({len(anekdot_books)})\n")
-    lines.append("_Эти книги нашлись по запросу, но не упоминают 1986 год. "
-                 "Отсортированы по году (если он указан)._\n")
-    if anekdot_books:
+    # Контекст: сборники анекдотов 1984-1993 (расширенный диапазон)
+    context_books = [b for b in all_books if is_context_book(b)]
+    context_books.sort(key=lambda b: (b.year or "9999", b.title.lower()))
+    lines.append(f"## Контекст: сборники анекдотов 1984-1993 ({len(context_books)})\n")
+    lines.append("_Эти книги изданы в расширенном диапазоне (перестройка + ранний постсовет) — "
+                 "тематически релевантны._")
+    lines.append("")
+    if context_books:
         lines.append("| # | Год | Название | Автор | Формат | MD5 |")
         lines.append("|---|-----|----------|-------|--------|-----|")
-        for i, b in enumerate(anekdot_books[:80], 1):
+        for i, b in enumerate(context_books[:120], 1):
             title = (b.title or "(без названия)").replace("|", "/")[:80]
             author = (b.author or "—").replace("|", "/")[:40]
             fmt = b.format or "—"
             year = b.year or "—"
             lines.append(f"| {i} | {year} | {title} | {author} | {fmt} | [`{b.md5[:8]}`]({b.detail_url}) |")
-        if len(anekdot_books) > 80:
-            lines.append(f"\n_… и ещё {len(anekdot_books) - 80} книг — см. полный JSON-дамп._")
+        if len(context_books) > 120:
+            lines.append(f"\n_… и ещё {len(context_books) - 120} книг — см. полный JSON-дамп._")
+    lines.append("")
+
+    # Полный список всех сборников анекдотов (без фильтра по году)
+    all_anekdot = [b for b in all_books if is_anekdot_book(b)]
+    all_anekdot.sort(key=lambda b: (b.year or "9999", b.title.lower()))
+    lines.append(f"## Все сборники анекдотов в индексе ({len(all_anekdot)})\n")
+    lines.append("_Полный список всех найденных книг про анекдоты (любой год) — "
+                 "полезно для дальнейшей фильтрации._")
+    lines.append("")
+    if all_anekdot:
+        lines.append("| # | Год | Название | Автор | Формат | MD5 |")
+        lines.append("|---|-----|----------|-------|--------|-----|")
+        for i, b in enumerate(all_anekdot[:200], 1):
+            title = (b.title or "(без названия)").replace("|", "/")[:80]
+            author = (b.author or "—").replace("|", "/")[:40]
+            fmt = b.format or "—"
+            year = b.year or "—"
+            lines.append(f"| {i} | {year} | {title} | {author} | {fmt} | [`{b.md5[:8]}`]({b.detail_url}) |")
+        if len(all_anekdot) > 200:
+            lines.append(f"\n_… и ещё {len(all_anekdot) - 200} книг — см. полный JSON-дамп._")
     lines.append("")
 
     OUTPUT_MD.write_text("\n".join(lines), encoding="utf-8")
@@ -613,7 +696,7 @@ def write_markdown(books: list[Book], all_books: list[Book], stats: dict[str, in
 async def main() -> int:
     OUTPUT_LOG.write_text("", encoding="utf-8")
     log("=" * 70)
-    log("Anna's Archive — скрапер сборников советских анекдотов 1986 года")
+    log("Anna's Archive — скрапер сборников советских анекдотов 1985-1990 (перестройка)")
     log(f"Queries: {QUERIES}")
     log(f"Output: {OUTPUT_MD}")
     log("=" * 70)
@@ -632,7 +715,7 @@ async def main() -> int:
         books = await enrich_details(client, skeletons)
         log(f"OK  Получено метаданных: {len(books)}")
 
-        log("\n[3/3] Фильтрация по 1986 году и релевантности...")
+        log("\n[3/3] Фильтрация по диапазону 1985-1990 и релевантности...")
         relevant = [b for b in books if is_relevant(b)]
         log(f"OK  Релевантных: {len(relevant)}")
 
@@ -644,7 +727,8 @@ async def main() -> int:
         log(f"OK  Markdown: {OUTPUT_MD}")
 
         log("\n=== ИТОГ ===")
-        log(f"Запросов: {len(QUERIES)} | Всего книг: {len(books)} | Релевантных 1986: {len(relevant)}")
+        log(f"Запросов: {len(QUERIES)} | Всего книг: {len(books)} | "
+            f"Релевантных {YEAR_RANGE[0]}-{YEAR_RANGE[1]}: {len(relevant)}")
         return 0
 
 
