@@ -88,8 +88,11 @@ ollama serve
 ### 4. Чистка датасета
 
 ```bash
-python prepare_jokes.py
+python prepare_jokes.py            # -> data/jokes_clean.jsonl (~27 000 анекдотов)
+python scripts/filter_jokes.py     # -> data/jokes_filtered.jsonl (~18 000, без стихов/копирайтов/мусора)
 ```
+
+`build_vector_db.py` автоматически берёт `jokes_filtered.jsonl` если он есть.
 
 ### 5. Векторная база
 
