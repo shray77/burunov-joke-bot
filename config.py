@@ -17,6 +17,43 @@ TTS_MODE = "edge"
 # Адрес TTS-сервера (для server-режима)
 TTS_SERVER_HOST = "http://localhost:8001"
 
+# Хосты RAG и TTS (для robot_controller.py)
+RAG_HOST = "http://localhost:8000"
+TTS_HOST = "http://localhost:8001"
+TTS_SPEED = 0.9    # 1.0 = норма, 0.85 = медленно (для Бурунова)
+
+# Таймауты (сек)
+RAG_TIMEOUT = 90.0    # Gemma на CPU может думать долго
+TTS_TIMEOUT = 60.0    # Piper быстрее, но на всякий случай
+
+
+# ─── Unitree G1 конфигурация ───────────────────────────────────────────
+# Сеть
+G1_NETWORK_INTERFACE = "eth0"        # eth0 (кабель) | usb0 (USB-tether) | wlan0 (WiFi)
+# IP робота по умолчанию: 192.168.123.161 (multicast 239.168.123.161:5555)
+
+# Аудио (через AudioClient.PlayStream)
+G1_ENABLE_AUDIO = True
+G1_AUDIO_APP_NAME = "burunov_bot"    # идентификатор приложения для PlayStream
+G1_AUDIO_CHUNK_SEC = 1.0             # длительность одного PCM-чанка (1 сек = 32KB)
+G1_AUDIO_VOLUME = 100                # громкость 0-100, дока рекомендует 100
+
+# Жесты (через LocoClient)
+G1_ENABLE_GESTURES = True
+
+# Кисти рук ( Inspire RH56DFTP — то что в спеке G1 EDU Ultimate D )
+# Поддерживаемые типы: "RH56DFTP" | "RH56DFX" | "DEX3-1" | "BRAINCO"
+G1_HAND_TYPE = "RH56DFTP"
+G1_ENABLE_HANDS = True
+
+# Требования к прошивке (проверить при доступе к G1):
+#   Vui_Service    >= 2.0.3.8
+#   Vui Module     >= 2.0.0.3
+#   Vul Service    >= 2.0.4.4
+#   Webrtc Bridge  >= 1.0.7.5
+#   Audio Hub      >= 1.0.1.0
+#   Firmware       >= 1.3.0 (для GPT voice assistant)
+
 # Сырой JSON от скраппера друга. Формат — список объектов:
 # [{"id": ..., "text": "...", "year": 1986, "tags": ["Штирлиц", ...]}, ...]
 RAW_JOKES_PATH = DATA_DIR / "jokes_raw.json"

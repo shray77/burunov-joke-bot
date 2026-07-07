@@ -3,7 +3,7 @@
 Инструкция по запуску всей системы прямо на роботе G1 — без облака,
 без WiFi-зависимости. Идеально для демо на хакатоне.
 
-## Архитектура
+## Архитектура (ПРАВИЛЬНАЯ под unitree_sdk2)
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -12,24 +12,45 @@
 │  Docker compose:                                    │
 │   • rag:8000    (Gemma + ChromaDB + FastAPI)        │
 │   • tts:8001    (Piper ONNX, CPU-only)              │
+│     ↑ /synthesize_pcm → PCM 16kHz mono 16-bit       │
 │                                                     │
 │  Robot controller (вне docker):                     │
 │   • robot_controller.py                             │
-│   • unitree_gestures.py                             │
+│   • unitree_audio.py    → AudioClient.PlayStream()  │
+│   • unitree_gestures.py → LocoClient.Sit/StandUp    │
+│   • unitree_hands.py    → HandClient (RH56DFTP)     │
 │                                                     │
 │  Ollama (host, не в docker):                        │
 │   • gemma3:4b                                        │
 │                                                     │
-│  Аудио: USB-динамик + микрофон (у шеи)              │
+│  Аудио: встроенный динамик Stanley (8Ω 3W)          │
+│  Микрофон: 4-мик решётка (для интерактива)          │
+│  RGB-лента: 256 цветов (синхрон с речью)            │
 └─────────────────────────────────────────────────────┘
 ```
 
+## КРИТИЧНО: требования к прошивке G1
+
+Перед стартом проверить через SSH на G1:
+
+| Компонент | Мин версия | Зачем |
+|---|---|---|
+| **Vui_Service** | ≥ 2.0.3.8 | AudioClient API (PlayStream, LedControl) |
+| **Vui Module** | ≥ 2.0.0.3 | ASR + TTS модуль |
+| **Vul Service** | ≥ 2.0.4.4 | Audio playback через VuiClient |
+| **Webrtc Bridge** | ≥ 1.0.7.5 | Streaming |
+| **Audio Hub** | ≥ 1.0.1.0 | Audio routing |
+| **Firmware (общая)** | ≥ 1.3.0 | GPT voice assistant |
+
+Если версия ниже → AudioClient.PlayStream() не сработает.
+Просить техподдержку Unitree обновить.
+
 ## Чек-лист перед стартом
 
-Подключись к G1 по SSH и проверь железо:
+Подключись к G1 по SSH и проверь:
 
 ```bash
-ssh unitree@<G1_IP>
+ssh unitree@192.168.123.161   # IP по умолчанию
 
 # 1. ОС и архитектура
 uname -a
@@ -50,16 +71,15 @@ docker compose version
 # 5. Ollama (если нет — поставим ниже)
 which ollama || echo "не установлена"
 
-# 6. Аудиоустройства
-arecord -l   # микрофоны
-aplay -l     # динамики
-pactl list short sinks
-
-# 7. Unitree SDK
+# 6. Unitree SDK2 Python
 pip3 list | grep -i unitree
 
-# 8. GPU (опционально)
-nvidia-smi 2>/dev/null || echo "GPU не найден (норм для G1)"
+# 7. Сетевой интерфейс к G1
+ip addr | grep "192.168.123"
+
+# 8. Версии сервисов (если есть доступ к diag)
+# Зависит от firmware — может быть в /opt/unitree/ или через app
+ls /opt/unitree/ 2>/dev/null
 ```
 
 Сохрани вывод — пригодится для дебага.
@@ -81,20 +101,26 @@ ollama pull gemma3:4b
 ollama run gemma3:4b "Привет"
 ```
 
-### 1.3. System-зависимости для аудио
-```bash
-sudo apt update
-sudo apt install -y \
-    portaudio19-dev python3-pyaudio \
-    espeak-ng ffmpeg \
-    alsa-utils pulseaudio
-```
-
-### 1.4. Unitree SDK (если не установлен)
+### 1.3. Unitree SDK2 Python (КРИТИЧНО)
 ```bash
 git clone https://github.com/unitreerobotics/unitree_sdk2_python.git
 cd unitree_sdk2_python
 pip3 install -e .
+# Проверка:
+python3 -c "from unitree_sdk2py.g1.audio.audio_client import AudioClient; print('OK')"
+```
+
+Если импорт не сработал — структура SDK может отличаться.
+Проверь: `pip3 show unitree_sdk2_python` и путь к g1-модулям.
+
+### 1.4. System-зависимости
+```bash
+sudo apt update
+sudo apt install -y \
+    python3-pip \
+    ffmpeg \
+    alsa-utils \
+    portaudio19-dev
 ```
 
 ## Этап 2. Подготовка моделей (на твоём ноуте с GPU)
@@ -131,8 +157,6 @@ piper train \
 # На выходе: burunov.onnx + burunov.onnx.json
 ```
 
-Альтернатива — обучение через [piper-training](https://github.com/rhasspy/piper/blob/master/TRAINING.md) на Google Colab (бесплатный T4, ~6 часов).
-
 ### 2.4. RAG-датасет
 ```bash
 # Попроси друга-скраппера положить data/jokes_raw.json
@@ -145,15 +169,16 @@ python build_vector_db.py
 
 ### 3.1. Копирование на G1
 ```bash
-# С твоего ноута:
-G1_IP=192.168.1.100   # IP робота в сети
+G1_IP=192.168.123.161
 
 # Код
-scp -r scripts/ unitree@$G1_IP:~/burunov/
+scp -r *.py Dockerfile docker-compose.yml requirements.txt \
+    unitree@$G1_IP:~/burunov/
 
 # Данные (ChromaDB + piper-модель)
 scp -r data/chroma_db unitree@$G1_IP:~/burunov/data/
-scp -r models/burunov.onnx models/burunov.onnx.json unitree@$G1_IP:~/burunov/models/
+scp -r models/burunov.onnx models/burunov.onnx.json \
+    unitree@$G1_IP:~/burunov/models/
 ```
 
 ### 3.2. Запуск на G1
@@ -170,25 +195,36 @@ curl http://localhost:8000/health
 curl http://localhost:8001/health
 ```
 
-### 3.3. Найти индекс USB-динамика
+### 3.3. Проверка AudioClient
 ```bash
-# Запустить без аргумента — покажет список устройств
-python3 robot_controller.py --list-devices
+# Тест SDK и AudioClient
+python3 unitree_audio.py
+# Должен:
+#   - инициализировать AudioClient
+#   - мигнуть RGB-лентой (синий → зелёный → красный)
+#   - установить громкость 100
 ```
-Найди в списке USB-колонку (часто "USB Audio Device" или "Default Audio Device") и впиши её индекс в `OUTPUT_DEVICE_INDEX` в `robot_controller.py`.
+
+Если silent-режим (нет SDK или нет доступа к роботу) — увидишь
+соответствующее сообщение, но код не упадёт.
 
 ### 3.4. Запуск оркестратора
-```bash
-# Тест с конкретной темой:
-python3 robot_controller.py "Штирлиц и Мюллер"
 
-# Интерактивный режим (через stdin):
+```bash
+# Один анекдот:
+python3 robot_controller.py "Штирлиц"
+
+# Интерактивный режим (ввод тем с клавиатуры):
 python3 robot_controller.py --interactive
+
+# HTTP-сервер для управления с телефона:
+python3 robot_controller.py --http --port 8002
+# Открой http://<G1_IP>:8002/docs с телефона
 ```
 
 ## Этап 4. Демо-режим
 
-### Запуск как systemd service (чтобы жил между ребутами)
+### Запуск как systemd service
 ```bash
 sudo tee /etc/systemd/system/burunov.service > /dev/null <<'EOF'
 [Unit]
@@ -200,7 +236,7 @@ Requires=docker.service
 Type=simple
 User=unitree
 WorkingDirectory=/home/unitree/burunov
-ExecStart=/usr/bin/python3 robot_controller.py --http
+ExecStart=/usr/bin/python3 robot_controller.py --http --port 8002
 Restart=on-failure
 RestartSec=10
 
@@ -213,9 +249,22 @@ sudo systemctl enable burunov
 sudo systemctl start burunov
 ```
 
-### HTTP-режим (для управления с телефона/ноута)
-Раскомментируй в `robot_controller.py` секцию HTTP-сервера, подними на G1:8002.
-С телефона в той же сети: `http://<G1_IP>:8002` → вводишь тему → жмёшь "Tell" → робот шутит.
+### HTTP-управление с телефона
+
+После `--http` открывается API на 8002 порту:
+
+```bash
+# С телефона в той же WiFi-сети:
+curl -X POST http://<G1_IP>:8002/tell \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "Штирлиц"}'
+
+# Стоп:
+curl -X POST http://<G1_IP>:8002/stop
+
+# Статус:
+curl http://<G1_IP>:8002/health
+```
 
 ## Этап 5. Fallback на случай сбоя
 
@@ -224,9 +273,7 @@ sudo systemctl start burunov
 ```bash
 # Предгенерированные wav-ки на популярные темы (заранее):
 mkdir -p fallback_audio
-python3 generate_fallback.py   # см. ниже
-
-# robot_controller при ошибке возьмёт случайный из fallback_audio/
+python3 generate_fallback.py   # (запланирован, ещё не написан)
 ```
 
 Популярные темы для fallback (10 штук хватит):
@@ -245,25 +292,41 @@ python3 generate_fallback.py   # см. ниже
 
 | Симптом | Решение |
 |---|---|
-| `Ollama connection refused` | `ollama serve` не запущен на G1. `sudo systemctl start ollama` |
-| `audio device not found` | `python3 robot_controller.py --list-devices`, подбери индекс |
-| Piper: `espeak not found` | `sudo apt install espeak-ng` |
-| Docker build OOM | RAM < 4 ГБ. Увеличь swap: `sudo fallocate -l 4G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile` |
-| Gemma медленная | Поставь Q4-квантизацию через Ollama: `ollama pull gemma3:4b-q4_0` |
+| `unitree_sdk2_python` не импортируется | Переустановить: `cd unitree_sdk2_python && pip install -e .` |
+| `AudioClient` не найден | Проверь `pip3 show unitree_sdk2_python`. Может называться иначе в новой версии |
+| `PlayStream` возвращает ошибку | Проверь версии Vui_Service/Vul_Service (нужны новые) |
+| Звук не идёт на динамик | Проверь `SetVolume(100)`, попробуй `TtsMaker("тест", 0)` для теста встроенного TTS |
+| Лента не моргает | `LedControl` требует интервал > 200ms между вызовами |
+| `Ollama connection refused` | `ollama serve` не запущен. `sudo systemctl start ollama` |
+| Docker build OOM | RAM < 4 ГБ. Своп: `sudo fallocate -l 4G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile` |
+| Gemma медленная | Q4-квантизация: `ollama pull gemma3:4b-q4_0` |
 | Русский текст кракозябрами | `export LANG=ru_RU.UTF-8` в окружении |
-| Жесты не работают | `unitree_sdk2_python` не установлен. Бот работает без жестов в silent-режиме |
+| LocoClient ошибки | Прошивка < 1.3.0 или робот в debug-режиме. `Start()` перед любым движением |
+| Рука RH56DFTP не отвечает | Проверь питание, попробуй `HandClient.Init()` повторно |
 | Длинная пауза перед речью | Gemma на CPU думает 10-20 сек. Юзай fallback на предгенерённые wav |
 
 ## Если совсем нет времени / не работает Piper
 
 Switch на GPT-SoVITS в server-режиме (ноут с GPU рядом):
 
-```bash
+```python
 # В config.py:
 TTS_MODE = "server"   # вместо "edge"
-
-# В robot_controller.py:
 TTS_HOST = "http://<твой_ноут_IP>:8001"
 ```
 
-Робот дёргает TTS с твоего ноута по WiFi. Менее эффектно для жюри, но надёжнее если Piper не успели обучить.
+Робот дёргает TTS с твоего ноута по WiFi. Менее эффектно для жюри,
+но надёжнее если Piper не успели обучить.
+
+## Что читать в доках Unitree
+
+Локально сохранено в `unitree_docs/`:
+- `about_g1.json` — железо, степени свободы, руки
+- `audio_playback.json` — спецификация WAV (16kHz, моно, ≤10МБ, ≤3 мин)
+- `voice_assistant.json` — встроенный GPT-ассистент (можно не использовать)
+- `vuiclient.json` — AudioClient API (PlayStream/LedControl/TtsMaker) — ГЛАВНОЕ
+- `sport_services.json` — LocoClient (Sit/StandUp/Squat/Move)
+- `dds_services.json` — DDS-транспорт
+
+Онлайн: https://support.unitree.com/home/en/G1_developer/services_interface
+

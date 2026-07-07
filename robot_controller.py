@@ -3,178 +3,120 @@ robot_controller.py
 ───────────────────
 Главный оркестратор на Unitree G1.
 
-Поток:
-  1. Получить тему (HTTP / UI / кнопка / микрофон)
-  2. POST /tell на RAG (локальный :8000) → текст в стиле Бурунова
-  3. POST /stream на TTS (:8001) → чанки wav
-  4. Воспроизвести через pyaudio на USB/внешнем динамике
-  5. Параллельно — жесты через unitree_gestures
+Переписан под правильную архитектуру с unitree_sdk2:
+  - RAG (текст) на отдельном сервисе
+  - TTS (Piper ONNX) на отдельном сервисе или на самом G1
+  - AudioClient.PlayStream() — воспроизведение через родной динамик G1
+  - LocoClient — жесты в такт речи
+  - HandClient — кисти Inspire RH56DFTP
+  - LedControl — RGB-лента в такт речи
 
 ────────────────────────────────────────────────────────────────────────
-Запуск на G1:
-  python robot_controller.py
+Запуск:
+  python robot_controller.py "Штирлиц"
+  python robot_controller.py --interactive
+  python robot_controller.py --http  (HTTP-сервер для управления с телефона)
 
-Или как service:
-  systemd unit / supervisor / nohup — см. EDGE_README.md
-────────────────────────────────────────────────────────────────────────
+Не требует pyaudio/USB-колонок — всё через unitree_sdk2.
 """
 import io
-import re
 import time
 import threading
 from pathlib import Path
+from typing import Optional
 
 import httpx
-import pyaudio
 
-# ─── Конфиг ───────────────────────────────────────────────────────────
-RAG_HOST = "http://localhost:8000"
-TTS_HOST = "http://localhost:8001"
-
-# Аудио-параметры Piper: 22050 Hz, моно, 16-bit
-SAMPLE_RATE = 22050
-CHANNELS = 1
-SAMPLE_WIDTH = 2
-
-# Индекс аудиоустройства для воспроизведения.
-# None = системный default (обычно работает на G1 из коробки).
-# Чтобы найти конкретный индекс USB-колонки:
-#   python -c "import pyaudio; p=pyaudio.PyAudio(); [print(i, p.get_device_info_by_index(i)['name']) for i in range(p.get_device_count())]"
-OUTPUT_DEVICE_INDEX = None
-
-# Включить ли жесты (False если SDK нет или робот не подключён)
-GESTURES_ENABLED = True
-
-# Скорость речи Бурунова (1.0 = норма, 0.85 = медленно/лениво)
-TTS_SPEED = 0.9
-
-# Таймауты
-RAG_TIMEOUT = 90.0    # Gemma на CPU может думать долго
-TTS_TIMEOUT = 60.0
+import config
+from unitree_audio import AudioClient, LedPulse
+from unitree_gestures import LocoController, GestureOrchestrator
+from unitree_hands import DualHandController
 
 
 # ─── Главный класс ────────────────────────────────────────────────────
 class RobotController:
+    """
+    Оркестратор: тема → RAG → TTS → динамик G1 + жесты + LED.
+    """
+
     def __init__(self):
-        self.client = httpx.Client(timeout=RAG_TIMEOUT)
-        self.pa = pyaudio.PyAudio()
-        self.audio_stream = None
+        # HTTP-клиент к RAG и TTS сервисам
+        self.http = httpx.Client(timeout=config.RAG_TIMEOUT)
 
-        # Жесты
-        if GESTURES_ENABLED:
-            from unitree_gestures import GestureController, SpeechSync
-            self.gestures = GestureController(enable=True)
-            self.sync = SpeechSync(self.gestures)
-        else:
-            self.gestures = None
-            self.sync = None
-
-    def close(self):
-        if self.audio_stream:
-            self.audio_stream.stop_stream()
-            self.audio_stream.close()
-        self.pa.terminate()
-        self.client.close()
-        if self.gestures:
-            self.gestures.stop()
-
-    # ─── Поиск динамика ──────────────────────────────────────────────
-    def list_output_devices(self):
-        """Список доступных аудиоустройств для вывода."""
-        print("\nДоступные аудиоустройства:")
-        for i in range(self.pa.get_device_count()):
-            info = self.pa.get_device_info_by_index(i)
-            if info["maxOutputChannels"] > 0:
-                print(f"  [{i}] {info['name']}  (out: {info['maxOutputChannels']}, sr: {int(info['defaultSampleRate'])})")
-
-    def _open_stream(self):
-        return self.pa.open(
-            format=pyaudio.paInt16,
-            channels=CHANNELS,
-            rate=SAMPLE_RATE,
-            output=True,
-            output_device_index=OUTPUT_DEVICE_INDEX,
+        # Аудио (через unitree_sdk2 AudioClient)
+        self.audio = AudioClient(
+            network_interface=config.G1_NETWORK_INTERFACE,
+            enable=config.G1_ENABLE_AUDIO,
         )
 
-    # ─── Воспроизведение ─────────────────────────────────────────────
-    def _play_wav_bytes(self, wav_bytes: bytes):
-        """Играет один wav-файл (с заголовком)."""
-        # Пропускаем WAV-заголовок (44 байта) и ищем "data" chunk
-        data_start = wav_bytes.find(b"data")
-        if data_start == -1:
-            return
-        audio_data = wav_bytes[data_start + 8:]
-        if not audio_data:
-            return
+        # Жесты (через LocoClient)
+        self.loco = LocoController(
+            network_interface=config.G1_NETWORK_INTERFACE,
+            enable=config.G1_ENABLE_GESTURES,
+        )
+        self.gestures = GestureOrchestrator(self.loco)
 
-        if self.audio_stream is None:
-            self.audio_stream = self._open_stream()
-        self.audio_stream.write(audio_data)
+        # Кисти рук (RH56DFTP)
+        self.hands = DualHandController(
+            network_interface=config.G1_NETWORK_INTERFACE,
+            left_type=config.G1_HAND_TYPE,
+            right_type=config.G1_HAND_TYPE,
+            enable=config.G1_ENABLE_HANDS,
+        )
 
-    def _play_stream(self, response):
-        """
-        Стримит wav-чанки (каждый = отдельное предложение) на динамик.
-        Параллельно запускает жест "говорит".
-        """
-        if self.audio_stream is None:
-            self.audio_stream = self._open_stream()
+        # Подготовка
+        self._init_robot()
 
-        total_bytes = 0
-        started_gesture = False
+    def _init_robot(self):
+        """Подготовка робота к демо."""
+        print("\n[init] Подготовка робота...")
+        self.audio.set_volume(100)   # дока рекомендует 100%
+        self.audio.led_control(0, 0, 50)  # тусклый синий = готов
+        self.hands.relax_both()
+        self.gestures.prepare()       # встать и балансировать
+        self.audio.led_control(0, 50, 0)  # зелёный = готов
+        print("[init] Готов.")
 
-        for chunk in response.iter_bytes():
-            if not chunk:
-                continue
-            # Запускаем жест при первом чанке
-            if not started_gesture and self.sync:
-                # Оцениваем длительность по размеру (~2.2 мин на байт при 22050/16/mono)
-                est_duration = len(chunk) / (SAMPLE_RATE * SAMPLE_WIDTH)
-                self.sync.start_talking(est_duration * 1.2)
-                started_gesture = True
-
-            # Извлекаем audio-данные (пропускаем wav-заголовок)
-            data_start = chunk.find(b"data")
-            if data_start == -1:
-                continue
-            audio_data = chunk[data_start + 8:]
-            if audio_data:
-                self.audio_stream.write(audio_data)
-                total_bytes += len(audio_data)
-
-        if self.sync:
-            self.sync.end_talking()
-
-        audio_sec = total_bytes / (SAMPLE_RATE * SAMPLE_WIDTH)
-        print(f"  ▶ проиграно {audio_sec:.1f} сек аудио")
+    def close(self):
+        """Корректное завершение."""
+        print("\n[close] Завершение...")
+        try:
+            self.gestures.idle()
+            self.hands.relax_both()
+            self.audio.led_control(0, 0, 0)
+            self.audio.play_stop(config.G1_AUDIO_APP_NAME)
+        finally:
+            self.http.close()
 
     # ─── Главная команда ─────────────────────────────────────────────
+
     def tell_joke(self, topic: str) -> dict:
         """
-        Тема → анекдот Бурунова с голосом и жестами.
+        Тема → анекдот Бурунова с голосом + жесты + LED.
         """
         print(f"\n{'='*60}")
         print(f"ТЕМА: «{topic}»")
         print(f"{'='*60}")
 
-        # 1. Жест "думает"
-        if self.sync:
-            print("🤔 (жест: думает)")
-            self.sync.thinking(1.5)
-            time.sleep(1.0)
+        # 1. Жест "думает" + LED синий
+        self.audio.led_control(0, 0, 255)
+        self.gestures.before_joke()
+        time.sleep(0.5)
 
         # 2. RAG: текст в стиле Бурунова
         print("📝 RAG: генерация текста...")
         t0 = time.time()
         try:
-            rag_resp = self.client.post(
-                f"{RAG_HOST}/tell",
+            rag_resp = self.http.post(
+                f"{config.RAG_HOST}/tell",
                 json={"topic": topic},
-                timeout=RAG_TIMEOUT,
+                timeout=config.RAG_TIMEOUT,
             )
             rag_resp.raise_for_status()
             rag_data = rag_resp.json()
         except Exception as e:
             print(f"❌ RAG failed: {e}")
+            self._error_feedback()
             return {"error": "rag_failed", "detail": str(e)}
 
         text = rag_data.get("text", "")
@@ -182,34 +124,151 @@ class RobotController:
         sources_count = len(rag_data.get("sources", []))
         print(f"  RAG done in {time.time()-t0:.1f}s, sources: {sources_count}")
         print(f"  Текст: {text[:120]}{'...' if len(text) > 120 else ''}")
-        print(f"  Fallback: {fallback}")
 
         if not text:
+            self._error_feedback()
             return {"error": "empty_text"}
 
-        # 3. TTS streaming + воспроизведение
-        print("🎤 TTS: стримю синтез на динамик...")
+        # 3. TTS: синтез в PCM (16kHz mono 16-bit — родной формат G1)
+        print("🎤 TTS: синтез...")
         t0 = time.time()
         try:
-            with self.client.stream(
-                "POST",
-                f"{TTS_HOST}/stream",
-                json={"text": text, "speed": TTS_SPEED},
-                timeout=TTS_TIMEOUT,
-            ) as tts_resp:
-                tts_resp.raise_for_status()
-                self._play_stream(tts_resp)
+            tts_resp = self.http.post(
+                f"{config.TTS_HOST}/synthesize_pcm",
+                json={"text": text, "speed": config.TTS_SPEED},
+                timeout=config.TTS_TIMEOUT,
+            )
+            tts_resp.raise_for_status()
+            pcm_data = tts_resp.content
         except Exception as e:
-            print(f"❌ TTS/playback failed: {e}")
+            print(f"❌ TTS failed: {e}")
+            self._error_feedback()
             return {"error": "tts_failed", "detail": str(e)}
 
-        print(f"  ▶ done in {time.time()-t0:.1f}s")
+        audio_sec = len(pcm_data) / (16000 * 2)
+        print(f"  TTS done in {time.time()-t0:.1f}s, {audio_sec:.1f} сек аудио")
+
+        # 4. Воспроизведение через AudioClient.PlayStream
+        # Параллельно: жесты + LED
+        print("🔊 Воспроизведение на G1...")
+        self._play_with_gestures(pcm_data, text)
+
         return {
             "topic": topic,
             "text": text,
             "sources": rag_data.get("sources", []),
             "fallback": fallback,
+            "audio_seconds": audio_sec,
         }
+
+    def _play_with_gestures(self, pcm_data: bytes, text: str):
+        """
+        Воспроизводит PCM на роботе + синхронизирует жесты и LED.
+        """
+        # Запускаем жест "говорит"
+        self.gestures.start_telling()
+
+        # LED-пульсация синим во время речи
+        with LedPulse(self.audio, color=(0, 0, 255), interval=0.4):
+            # Стримим PCM чанками через PlayStream
+            chunk_size = int(16000 * 2 * config.G1_AUDIO_CHUNK_SEC)
+            stream_id = str(int(time.time() * 1000))
+            total_chunks = (len(pcm_data) + chunk_size - 1) // chunk_size
+
+            for i in range(0, len(pcm_data), chunk_size):
+                chunk = pcm_data[i:i + chunk_size]
+                if not self.audio.play_stream(
+                    config.G1_AUDIO_APP_NAME, chunk, stream_id
+                ):
+                    print(f"  ⚠ ошибка на чанке {i//chunk_size}/{total_chunks}")
+                    break
+                # Ждём чтобы чанк доиграл (с небольшим запасом)
+                time.sleep(config.G1_AUDIO_CHUNK_SEC * 0.95)
+
+        # После речи — жест "смех"
+        self.gestures.after_joke()
+
+        # Зелёный = завершили
+        self.audio.led_control(0, 50, 0)
+
+    def _error_feedback(self):
+        """Красная лента + отрицательный жест при ошибке."""
+        self.audio.led_control(255, 0, 0)
+        time.sleep(1.0)
+        self.audio.led_control(0, 0, 0)
+
+    # ─── Интерактивный режим ─────────────────────────────────────────
+
+    def interactive_loop(self):
+        """Чтение тем из stdin. Ввод = рассказать анекдот."""
+        print("\n" + "="*60)
+        print("🤖 Burunov Bot — интерактивный режим")
+        print("="*60)
+        print("Вводи тему анекдота, Enter — рассказать")
+        print("Команды: 'exit' / 'quit' — выход, 'stop' — стоп аудио\n")
+
+        while True:
+            try:
+                topic = input("\n📝 Тема > ").strip()
+            except (EOFError, KeyboardInterrupt):
+                break
+
+            if not topic:
+                continue
+            if topic.lower() in ("exit", "quit", "q"):
+                break
+            if topic.lower() == "stop":
+                self.audio.play_stop(config.G1_AUDIO_APP_NAME)
+                self.gestures.idle()
+                continue
+
+            try:
+                self.tell_joke(topic)
+            except Exception as e:
+                print(f"❌ Ошибка: {e}")
+
+    # ─── HTTP-режим для управления с телефона ────────────────────────
+
+    def http_server(self, port: int = 8002):
+        """Поднимает простую HTTP-ручку для управления с телефона."""
+        from fastapi import FastAPI, HTTPException
+        from pydantic import BaseModel
+        import uvicorn
+
+        app = FastAPI(title="Burunov Robot Controller")
+
+        class TellReq(BaseModel):
+            topic: str
+
+        @app.get("/")
+        def index():
+            return {"status": "ok", "robot": "G1 Burunov"}
+
+        @app.post("/tell")
+        def tell(req: TellReq):
+            try:
+                result = self.tell_joke(req.topic)
+                return result
+            except Exception as e:
+                raise HTTPException(500, str(e))
+
+        @app.post("/stop")
+        def stop():
+            self.audio.play_stop(config.G1_AUDIO_APP_NAME)
+            self.gestures.idle()
+            return {"status": "stopped"}
+
+        @app.get("/health")
+        def health():
+            return {
+                "audio": self.audio.available,
+                "gestures": self.loco.available,
+                "hands": self.hands.available,
+            }
+
+        print(f"\n🌐 HTTP-сервер: http://0.0.0.0:{port}")
+        print(f"   Управление: POST /tell {{\"topic\":\"Штирлиц\"}}")
+        uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 # ─── CLI ──────────────────────────────────────────────────────────────
@@ -218,24 +277,24 @@ def main():
 
     bot = RobotController()
 
-    # Если передан --list-devices — показать аудиоустройства и выйти
-    if "--list-devices" in sys.argv:
-        bot.list_output_devices()
-        bot.close()
-        return
-
-    # Тема из аргументов
-    topic = " ".join(a for a in sys.argv[1:] if not a.startswith("--"))
-    if not topic:
-        topic = "Штирлиц и Мюллер"
-
-    print(f"🤖 Burunov bot готов. Динамик: {OUTPUT_DEVICE_INDEX or 'default'}")
-    print(f"   Жесты: {'вкл' if GESTURES_ENABLED else 'выкл'}")
-
     try:
-        result = bot.tell_joke(topic)
-        if "error" in result:
-            print(f"\n❌ Ошибка: {result['error']}")
+        # Режимы запуска
+        if "--http" in sys.argv:
+            port = 8002
+            for i, a in enumerate(sys.argv):
+                if a == "--port" and i+1 < len(sys.argv):
+                    port = int(sys.argv[i+1])
+            bot.http_server(port)
+
+        elif "--interactive" in sys.argv or "-i" in sys.argv:
+            bot.interactive_loop()
+
+        else:
+            # Один анекдот из аргументов
+            topic = " ".join(a for a in sys.argv[1:] if not a.startswith("--"))
+            if not topic:
+                topic = "Штирлиц и Мюллер"
+            bot.tell_joke(topic)
     finally:
         bot.close()
 

@@ -1,60 +1,66 @@
 """
 unitree_gestures.py
 ───────────────────
-Обёртка над unitree_sdk2_python для синхронизации жестов с речью.
+Обёртка над unitree_sdk2 LocoClient для синхронизации жестов с речью.
 
-Если SDK не установлен или робот недоступен — всё работает,
-просто без жестов (silent fallback). Это чтобы можно было
-тестировать на ноуте без робота.
+LocoClient — это Sport Service Interface из официальной доки.
+Методы (из доки Sport Services Interface):
+  - Start()               — вход в main operation control
+  - StandUp()             — встать
+  - Sit()                 — сесть
+  - Squat()               — присесть
+  - BalanceStand()        — балансировка стоя
+  - Move(vx, vy, vyaw)    — движение (для интерактива)
+  - StopMove()            — стоп движения
+  - Damp()                — демпфирование
+  - ZeroTorque()          — нулевой момент
+  - ContinuousGait(flag)  — постоянная ходьба
+
+Жесты для нашего проекта ("Бурунов рассказывает анекдот"):
+  - idle       — StandUp, руки вниз
+  - talking    — лёгкое покачивание корпуса (Move с малой vyaw)
+  - thinking   — Move head (через AX-12 если есть)
+  - punchline  — резкий взмах (через руки)
+  - laugh      — Sit → StandUp
+  - bow        — наклон корпуса (через тазобедренный)
+
+ВАЖНО: Робот двигается! Все вызовы должны быть безопасными.
+Не делай Move с большой скоростью — G1 может упасть.
 
 ────────────────────────────────────────────────────────────────────────
-Установка SDK (если не установлен на G1):
-  git clone https://github.com/unitreerobotics/unitree_sdk2_python.git
-  cd unitree_sdk2_python
-  pip install -e .
-
-Документация:
-  https://support.unitree.com/home/en/G1_developer/about_G1
-────────────────────────────────────────────────────────────────────────
+Требования к прошивке:
+  Sport Service: входит в базовую прошивку G1
+  Motion Switcher: для переключения режимов
 """
 import time
 import threading
 from typing import Optional
 
-# ─── Конфиг ───────────────────────────────────────────────────────────
-ROBOT_NETWORK_INTERFACE = "eth0"   # сетевой интерфейс к роботу
-# Если робот через USB- tether: "usb0"
-# Если через WiFi: "wlan0"
-
-# Порог громкости для "говорит" жеста (если используем mic)
-SPEAK_VOLUME_THRESHOLD = 0.05
-
-# Жесты (упрощённо — реальная реализация требует unitree_sdk2)
-GESTURES = {
-    "idle":           {"description": "Стоит, руки вниз"},
-    "talking":        {"description": "Лёгкое движение руками в такт речи"},
-    "thinking":       {"description": "Рука к подбородку"},
-    "punchline":      {"description": "Резкий взмах при панчлайне"},
-    "laugh":          {"description": "Голова назад, плечи поднимаются"},
-}
+import config
 
 
-class GestureController:
+# ─── Безопасные параметры движения ────────────────────────────────────
+SAFE_VYAW_TALKING = 0.05    # рад/с, лёгкое покачивание
+SAFE_VX = 0.0
+SAFE_VY = 0.0
+GESTURE_TRANSITION_PAUSE = 0.5  # сек между сменами поз
+
+
+class LocoController:
     """
-    Управление жестами G1.
+    Управление движениями G1 через LocoClient.
 
-    Реальная реализация требует unitree_sdk2_python и знания
-    конкретных Motor-IDs для рук/головы G1. Здесь — каркас,
-    который безопасно работает без реального робота.
+    Silent fallback если SDK/робот недоступен.
     """
 
-    def __init__(self, enable: bool = True, interface: str = ROBOT_NETWORK_INTERFACE):
+    def __init__(self, network_interface: str = "eth0", enable: bool = True):
+        self.network_interface = network_interface
         self.enable = enable
-        self.interface = interface
-        self._sdk = None
-        self._current = "idle"
-        self._thread: Optional[threading.Thread] = None
-        self._stop_flag = threading.Event()
+        self._loco = None
+        self._available = False
+        self._current_pose = "idle"
+        self._talking_thread = None
+        self._stop_talking = threading.Event()
 
         if not enable:
             print("[gestures] DISABLED (config)")
@@ -62,125 +68,278 @@ class GestureController:
 
         try:
             self._init_sdk()
-            print(f"[gestures] OK, SDK loaded on {interface}")
+            self._available = True
+            print(f"[gestures] OK, LocoClient loaded on {network_interface}")
         except Exception as e:
-            print(f"[gestures] SDK не доступен: {e}")
-            print("[gestures] Работаем в silent-режиме (без жестов).")
-            self.enable = False
+            print(f"[gestures] SDK/робот недоступны: {e}")
+            print("[gestures] Работаем в silent-режиме.")
+            self._available = False
 
     def _init_sdk(self):
-        """Попытка инициализации unitree_sdk2."""
         from unitree_sdk2py.core.channel import ChannelFactory
-        # Инициализация канала связи с роботом
-        ChannelFactory.Initialize(0, self.interface)
+        from unitree_sdk2py.g1.loco.loco_client import LocoClient
 
-        # Импорт motor-клиентов для рук
-        # На G1: arm = 5 DOF × 2, hands (RH56DFTP) = 6 DOF × 2
-        # Реальные Motor-IDs зависят от firmware — см. доки Unitree
-        from unitree_sdk2py.gclient.loco.client import (
-            RobotClient, data as robot_data,
-        )
-        self._sdk = RobotClient(self.interface)
-        # Ставим в режим стояния
-        self._sdk.stand_up()
-        time.sleep(2)
+        # ChannelFactory уже инициализирован в AudioClient — реинициализация
+        # в unitree_sdk2 безопасна (singleton)
+        ChannelFactory.Initialize(0, self.network_interface)
 
-    def play_gesture(self, name: str, duration: float = 2.0):
+        self._loco = LocoClient()
+        self._loco.Init()
+        self._loco.SetTimeout(10.0)
+
+    @property
+    def available(self) -> bool:
+        return self._available
+
+    # ─── Базовые позы ────────────────────────────────────────────────
+
+    def start(self) -> bool:
+        """Войти в main operation control. Первая команда после включения."""
+        if not self._available:
+            return True
+        ret = self._loco.Start()
+        if ret == 0:
+            print("[gestures] Start OK")
+            time.sleep(GESTURE_TRANSITION_PAUSE)
+            return True
+        return False
+
+    def stand_up(self) -> bool:
+        if not self._available:
+            return True
+        ret = self._loco.StandUp()
+        if ret == 0:
+            self._current_pose = "standing"
+            time.sleep(GESTURE_TRANSITION_PAUSE)
+            return True
+        return False
+
+    def sit(self) -> bool:
+        if not self._available:
+            return True
+        ret = self._loco.Sit()
+        if ret == 0:
+            self._current_pose = "sitting"
+            time.sleep(GESTURE_TRANSITION_PAUSE)
+            return True
+        return False
+
+    def squat(self) -> bool:
+        if not self._available:
+            return True
+        ret = self._loco.Squat()
+        if ret == 0:
+            self._current_pose = "squatting"
+            time.sleep(GESTURE_TRANSITION_PAUSE)
+            return True
+        return False
+
+    def balance_stand(self) -> bool:
+        """Балансировка стоя — рекомендованная поза для разговоров."""
+        if not self._available:
+            return True
+        ret = self._loco.BalanceStand()
+        if ret == 0:
+            self._current_pose = "balance_stand"
+            time.sleep(GESTURE_TRANSITION_PAUSE)
+            return True
+        return False
+
+    # ─── Движение ────────────────────────────────────────────────────
+
+    def move(self, vx: float = 0.0, vy: float = 0.0, vyaw: float = 0.0,
+              continuous: bool = False) -> bool:
         """
-        Запустить жест. Асинхронный — возвращает сразу.
+        Скорость: vx вперёд, vy вбок, vyaw поворот.
+        Безопасные значения: |v| < 0.3, |vyaw| < 0.5
         """
-        if name not in GESTURES:
-            print(f"[gestures] неизвестный жест: {name}")
+        if not self._available:
+            return True
+        ret = self._loco.Move(vx, vy, vyaw)
+        return ret == 0
+
+    def stop_move(self) -> bool:
+        if not self._available:
+            return True
+        ret = self._loco.StopMove()
+        return ret == 0
+
+    # ─── Синхронизация с речью ───────────────────────────────────────
+
+    def start_talking_sway(self):
+        """
+        Запускает лёгкое покачивание корпуса во время речи.
+        Асинхронное — возвращает сразу.
+        """
+        if not self._available:
             return
-
-        if not self.enable:
-            return
-
-        # Останавливаем предыдущий поток
-        self._stop_flag.set()
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=0.5)
-
-        self._stop_flag.clear()
-        self._current = name
-        self._thread = threading.Thread(
-            target=self._run_gesture,
-            args=(name, duration),
-            daemon=True,
+        self._stop_talking.clear()
+        self._talking_thread = threading.Thread(
+            target=self._sway_loop, daemon=True
         )
-        self._thread.start()
+        self._talking_thread.start()
+        print("[gestures] → talking (sway started)")
 
-    def _run_gesture(self, name: str, duration: float):
-        """Реальное выполнение жеста. Заглушка — просто логируем."""
-        # TODO: реализовать реальные движения моторов через SDK
-        # Например для "talking" — легкое покачивание руками 0.5 Гц
-        start = time.time()
-        while time.time() - start < duration and not self._stop_flag.is_set():
-            # Реальная отправка команд моторам — зависит от SDK
-            time.sleep(0.1)
+    def stop_talking_sway(self):
+        """Остановить покачивание."""
+        self._stop_talking.set()
+        if self._talking_thread and self._talking_thread.is_alive():
+            self._talking_thread.join(timeout=2.0)
+        if self._available:
+            self.stop_move()
+        print("[gestures] → idle (sway stopped)")
 
-    def stop(self):
-        """Остановить все жесты, вернуть в idle."""
-        self._stop_flag.set()
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=1.0)
-        if self.enable:
-            self.play_gesture("idle", 0.5)
+    def _sway_loop(self):
+        """Лёгкое покачивание: поворот влево-вправо."""
+        direction = 1
+        while not self._stop_talking.is_set():
+            self.move(vx=0, vy=0, vyaw=direction * SAFE_VYAW_TALKING)
+            direction *= -1
+            self._stop_talking.wait(2.0)  # меняется каждые 2 сек
+        self.stop_move()
 
-    def current(self) -> str:
-        return self._current
+    def punchline_gesture(self):
+        """Короткий жест при панчлайне — лёгкий поворот."""
+        if not self._available:
+            return
+        print("[gestures] → punchline")
+        # Останавливаем sway
+        self._stop_talking.set()
+        if self._talking_thread and self._talking_thread.is_alive():
+            self._talking_thread.join(timeout=1.0)
+        # Резкий маленький поворот
+        self.move(vyaw=0.15)
+        time.sleep(0.3)
+        self.move(vyaw=-0.15)
+        time.sleep(0.3)
+        self.stop_move()
+
+    def laugh_gesture(self):
+        """Жест "смеётся" — присесть-встать."""
+        if not self._available:
+            return
+        print("[gestures] → laugh")
+        self.squat()
+        time.sleep(0.5)
+        self.stand_up()
+
+    def bow_gesture(self):
+        """Лёгкий поклон — наклон через тазобедренный."""
+        # На G1 нет прямого API для наклона корпуса через LocoClient,
+        # но через low-level motor control можно. Для безопасности хакатона
+        # делаем через Squat → StandUp
+        if not self._available:
+            return
+        print("[gestures] → bow")
+        self.squat()
+        time.sleep(0.8)
+        self.stand_up()
+
+    def thinking_gesture(self):
+        """Жест "думает" — лёгкое движение головы влево-вправо."""
+        # Через тазобедренный сустав
+        if not self._available:
+            return
+        print("[gestures] → thinking")
+        self.move(vyaw=0.1)
+        time.sleep(0.5)
+        self.move(vyaw=-0.1)
+        time.sleep(0.5)
+        self.stop_move()
+
+    @property
+    def current_pose(self) -> str:
+        return self._current_pose
+
+    def emergency_stop(self):
+        """Аварийная остановка — Damp режим."""
+        if not self._available:
+            return
+        self._stop_talking.set()
+        self._loco.StopMove()
+        self._loco.Damp()
+        print("[gestures] EMERGENCY STOP (Damp mode)")
 
 
-# ─── Синхронизация с речью ────────────────────────────────────────────
-class SpeechSync:
+# ─── Высокоуровневый оркестратор жестов ──────────────────────────────
+class GestureOrchestrator:
     """
-    Синхронизирует жесты с воспроизведением аудио.
-
-    Пример:
-        sync = SpeechSync(gestures)
-        sync.start("talking", audio_duration_sec=8.5)
-        # ... воспроизводим аудио ...
-        sync.end()  # вернёт в idle
+    Связывает жесты с этапами анекдота:
+      1. thinking — перед началом ("хм, что-то вспомню из 86-го...")
+      2. talking  — основной рассказ, лёгкое покачивание
+      3. punchline — резкий жест на ключевой фразе
+      4. laugh    — после панчлайна
+      5. idle     — отдых
     """
 
-    def __init__(self, controller: GestureController):
-        self.ctrl = controller
+    def __init__(self, loco: LocoController):
+        self.loco = loco
 
-    def start_talking(self, duration_sec: float):
-        """Начать жест "говорит" на указанную длительность."""
-        self.ctrl.play_gesture("talking", duration=duration_sec)
+    def prepare(self):
+        """Подготовка к демо — встать и балансировать."""
+        if not self.loco.available:
+            return
+        self.loco.start()
+        self.loco.stand_up()
+        self.loco.balance_stand()
 
-    def end_talking(self):
-        """Закончить говорить, вернуться в idle."""
-        self.ctrl.stop()
+    def before_joke(self):
+        """Жест перед рассказом анекдота."""
+        self.loco.thinking_gesture()
 
-    def punchline(self):
-        """Короткий жест для панчлайна (0.8 сек)."""
-        self.ctrl.play_gesture("punchline", duration=0.8)
+    def start_telling(self):
+        """Начать рассказ — лёгкое покачивание."""
+        self.loco.start_talking_sway()
 
-    def thinking(self, duration: float = 1.5):
-        """Жест "думает" перед началом шутки."""
-        self.ctrl.play_gesture("thinking", duration=duration)
+    def on_punchline(self):
+        """Панчлайн — резкий жест."""
+        self.loco.punchline_gesture()
+
+    def after_joke(self):
+        """После анекдота — присесть от смеха."""
+        self.loco.stop_talking_sway()
+        self.loco.laugh_gesture()
+
+    def idle(self):
+        """Вернуться в спокойное состояние."""
+        self.loco.stop_talking_sway()
+        if self.loco.available:
+            self.loco.balance_stand()
 
 
-# ─── Тест из консоли ──────────────────────────────────────────────────
+# ─── Тест ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    import sys
+    print("=== Тест LocoController ===\n")
+    loco = LocoController(network_interface=config.G1_NETWORK_INTERFACE)
 
-    print("Тест GestureController (silent mode если нет SDK)...")
-    ctrl = GestureController(enable=True)
+    print(f"\navailable: {loco.available}")
 
-    print("\nЖесты по очереди (2 сек каждый):")
-    for name in GESTURES:
-        print(f"  → {name}: {GESTURES[name]['description']}")
-        ctrl.play_gesture(name, duration=2.0)
-        time.sleep(2.0)
+    # Базовые позы
+    print("\n--- Базовые позы ---")
+    loco.prepare()
+    time.sleep(2)
 
-    print("\nТест SpeechSync...")
-    sync = SpeechSync(ctrl)
-    sync.thinking(1.5)
-    time.sleep(1.5)
-    sync.start_talking(3.0)
-    time.sleep(3.0)
-    sync.end_talking()
-    print("Done.")
+    # Жесты
+    print("\n--- Жесты ---")
+    orch = GestureOrchestrator(loco)
+
+    print("\n1. Before joke (thinking)")
+    orch.before_joke()
+    time.sleep(2)
+
+    print("\n2. Start telling (sway)")
+    orch.start_telling()
+    time.sleep(5)
+
+    print("\n3. Punchline")
+    orch.on_punchline()
+    time.sleep(1)
+
+    print("\n4. After joke (laugh)")
+    orch.after_joke()
+    time.sleep(2)
+
+    print("\n5. Idle")
+    orch.idle()
+
+    print("\n=== Тест завершён ===")

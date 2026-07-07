@@ -109,7 +109,7 @@ def _synth_to_wav_bytes(text: str, speed: float) -> bytes:
 
 @app.post("/synthesize")
 def synth(req: SynthRequest):
-    """Синхронный синтез. Возвращает wav целиком."""
+    """Синхронный синтез. Возвращает wav целиком (с заголовком)."""
     if not req.text.strip():
         raise HTTPException(400, "text пустой")
     try:
@@ -126,6 +126,35 @@ def synth(req: SynthRequest):
         raise HTTPException(500, f"Synthesis failed: {e}")
 
     return Response(content=wav_bytes, media_type="audio/wav")
+
+
+@app.post("/synthesize_pcm")
+def synth_pcm(req: SynthRequest):
+    """
+    Синтез → чистый PCM без заголовка (16kHz, mono, 16-bit).
+    Это РОДНОЙ формат для unitree_sdk2 AudioClient.PlayStream().
+
+    Используется robot_controller.py для стриминга на G1.
+    """
+    if not req.text.strip():
+        raise HTTPException(400, "text пустой")
+    try:
+        t0 = time.time()
+        wav_bytes = _synth_to_wav_bytes(req.text, req.speed)
+        # Срезаем WAV-заголовок, оставляем только PCM
+        data_start = wav_bytes.find(b"data")
+        if data_start == -1:
+            raise HTTPException(500, "WAV format error")
+        pcm_data = wav_bytes[data_start + 8:]
+        elapsed = time.time() - t0
+        audio_sec = len(pcm_data) / (22050 * 2)
+        print(f"[synth_pcm] {len(req.text)} chars → {audio_sec:.1f}s PCM in {elapsed:.2f}s")
+    except FileNotFoundError as e:
+        raise HTTPException(500, f"Model missing: {e}")
+    except Exception as e:
+        raise HTTPException(500, f"Synthesis failed: {e}")
+
+    return Response(content=pcm_data, media_type="application/octet-stream")
 
 
 @app.post("/stream")

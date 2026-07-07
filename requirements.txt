@@ -7,10 +7,19 @@ pydantic==2.10.4
 httpx==0.28.1
 python-dotenv==1.0.1
 
-# ─── TTS-клиент (для tts_client.py) ───────────────────────────────────
-pyaudio==0.2.14
+# ─── Edge TTS (Piper ONNX, для edge_tts_server.py на G1) ─────────────
+piper-tts==1.2.0
 
-# ─── TTS-сервер и подготовка аудио ставятся ОТДЕЛЬНО ──────────────────
+# ─── Robot controller (для robot_controller.py на G1) ─────────────────
+# pyaudio больше НЕ нужен — воспроизведение через unitree_sdk2 AudioClient
+# (httpx, fastapi, uvicorn уже в core выше)
+
+# ─── Unitree SDK2 (ставится ОТДЕЛЬНО на G1, не через pip) ────────────
+# git clone https://github.com/unitreerobotics/unitree_sdk2_python.git
+# cd unitree_sdk2_python && pip install -e .
+# См. EDGE_README.md
+
+# ─── TTS-сервер (GPT-SoVITS) и подготовка аудио ставятся ОТДЕЛЬНО ─────
 # См. TTS_README.md. Они конфликтуют с RAG-зависимостями, поэтому:
 #
 # GPT-SoVITS (для tts_server.py):

@@ -17,9 +17,13 @@
   ↓
 [generator.py]                     # Ollama (Gemma) + промпт Бурунова
   ↓ текст в стиле Бурунова
-[tts_server.py]                    # GPT-SoVITS клон голоса
-  ↓ wav / stream
-[tts_client.py] → Unitree G1       # динамик робота
+[edge_tts_server.py]               # Piper ONNX → PCM 16kHz mono 16-bit
+  ↓ /synthesize_pcm
+[robot_controller.py]              # оркестратор на G1
+  ├─ unitree_audio.py    → AudioClient.PlayStream() → динамик Stanley
+  ├─ unitree_gestures.py → LocoClient.Sit/StandUp/Move → жесты в такт речи
+  ├─ unitree_hands.py    → HandClient (Inspire RH56DFTP) → кисти рук
+  └─ LedControl()        → RGB-лента 256 цветов
 ```
 
 ## Что в репо
@@ -27,23 +31,32 @@
 | Файл | Назначение |
 |---|---|
 | `scripts/anekdot_scraper.py` | Скраппер Anna's Archive (друг) |
-| `config.py` | Все настройки + промпт Бурунова |
+| `config.py` | Все настройки + промпт Бурунова + параметры G1 |
 | `prepare_jokes.py` | Чистка/дедупликация датасета анекдотов |
 | `build_vector_db.py` | ChromaDB + multilingual-e5-small |
 | `retriever.py` | Поиск топ-K анекдотов по теме |
 | `generator.py` | Ollama (Gemma) + системный промпт Бурунова |
 | `rag_pipeline.py` | Склейка retriever+generator |
-| `api.py` | FastAPI: `POST /tell {topic}` → `{text, sources}` |
-| `audio_prep.py` | Подготовка аудио Бурунова для fine-tune (Whisper+demucs) |
-| `tts_server.py` | FastAPI над GPT-SoVITS, real-time синтез |
-| `tts_client.py` | Клиент: текст → TTS → динамик/G1 |
+| `api.py` | FastAPI RAG: `POST /tell {topic}` → `{text, sources}` |
+| `audio_prep.py` | Подготовка аудио Бурунова (Whisper+demucs) |
+| `piper_train_prep.py` | Конвертация датасета в LJSpeech-формат |
+| `edge_tts_server.py` | **Edge TTS** на G1 (Piper ONNX, `/synthesize_pcm`) |
+| `tts_server.py` | Server-режим TTS (GPT-SoVITS, нужен GPU) |
+| `tts_client.py` | Простой клиент (для тестов без G1) |
+| **`robot_controller.py`** | **Оркестратор на G1** |
+| **`unitree_audio.py`** | **AudioClient.PlayStream + LedControl** |
+| **`unitree_gestures.py`** | **LocoClient (Sit/StandUp/Move) + жесты в такт речи** |
+| **`unitree_hands.py`** | **HandClient для Inspire RH56DFTP** |
+| `Dockerfile` / `docker-compose.yml` | Деплой на G1 одной командой |
 | `README.md` | Этот файл |
-| `TTS_README.md` | Инструкция по TTS-блоку (обучение/инференс) |
+| `TTS_README.md` | Обучение GPT-SoVITS (server-режим) |
+| `EDGE_README.md` | **Деплой на G1 (главная инструкция)** |
 
-## Два блока
+## Три блока
 
 1. **RAG-пайплайн** (ниже) — текст анекдота в стиле Бурунова
-2. **TTS-блок** (`TTS_README.md`) — клон голоса Бурунова на GPT-SoVITS
+2. **Edge TTS** (`EDGE_README.md`) — клон голоса Бурунова через Piper ONNX
+3. **Robot integration** — `unitree_audio.py` + `unitree_gestures.py` + `unitree_hands.py`
 
 ---
 
