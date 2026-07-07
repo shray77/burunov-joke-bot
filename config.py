@@ -61,6 +61,19 @@ RAW_JOKES_PATH = DATA_DIR / "jokes_raw.json"
 # Очищенный датасет (после prepare_jokes.py)
 CLEAN_JOKES_PATH = DATA_DIR / "jokes_clean.jsonl"
 
+# Дополнительно отфильтрованный датасет (после scripts/filter_jokes.py).
+# Если существует — build_vector_db.py и retriever.py предпочитают его.
+# В нём выкинуты стихи, копирайты, английский, словари акронимов, и т.д.
+FILTERED_JOKES_PATH = DATA_DIR / "jokes_filtered.jsonl"
+
+# Автовыбор: если FILTERED_JOKES_PATH существует — используем его
+def _active_jokes_path() -> Path:
+    if FILTERED_JOKES_PATH.exists():
+        return FILTERED_JOKES_PATH
+    return CLEAN_JOKES_PATH
+
+ACTIVE_JOKES_PATH = _active_jokes_path()
+
 # Папка ChromaDB (persist-диск)
 CHROMA_DIR = DATA_DIR / "chroma_db"
 CHROMA_COLLECTION = "jokes_1986"

@@ -43,6 +43,13 @@ pip install -r requirements.txt
 python3 prepare_jokes.py    # -> data/jokes_clean.jsonl (27 326 анекдотов)
 ```
 
+Затем — вторичная чистка (выкидывает стихи, копирайты, английский, словари):
+```bash
+python3 scripts/filter_jokes.py   # -> data/jokes_filtered.jsonl (~18 000 анекдотов)
+```
+
+`build_vector_db.py` автоматически предпочтёт `jokes_filtered.jsonl` если он есть.
+
 ### 3. Построить векторную базу
 
 ```bash
@@ -50,7 +57,7 @@ python3 build_vector_db.py   # -> data/chroma_db/ (ChromaDB + e5 embeddings)
 ```
 
 В `config.py` можно настроить `MAX_JOKES_FOR_INDEX`:
-- `None` — все 27 326 (≈2.7 часа на CPU)
+- `None` — все ~18 000 (после filter_jokes.py)
 - `1500` — дефолт для демо (≈45 сек на CPU)
 
 ### 4. Тест retriever

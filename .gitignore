@@ -30,3 +30,8 @@ Thumbs.db
 
 # RAG artifacts (генерируются скриптами, не в git)
 *.sqlite3
+
+# Jokes datasets (большие, генерируются скриптами)
+data/jokes_clean.jsonl
+data/jokes_filtered.jsonl
+data/jokes_raw.json

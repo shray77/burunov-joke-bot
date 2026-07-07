@@ -17,12 +17,16 @@ import config
 
 
 def load_clean_jokes() -> list[dict]:
-    if not config.CLEAN_JOKES_PATH.exists():
+    """Загружает анекдоты из ACTIVE_JOKES_PATH (filtered если есть, иначе clean)."""
+    path = config.ACTIVE_JOKES_PATH
+    if not path.exists():
         raise FileNotFoundError(
-            f"Сначала запусти prepare_jokes.py — нет файла {config.CLEAN_JOKES_PATH}"
+            f"Сначала запусти prepare_jokes.py (и опционально scripts/filter_jokes.py) "
+            f"— нет файла {path}"
         )
+    print(f"  Загружаем: {path.name} ({'filtered' if path == config.FILTERED_JOKES_PATH else 'clean'})")
     jokes = []
-    with config.CLEAN_JOKES_PATH.open("r", encoding="utf-8") as f:
+    with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
