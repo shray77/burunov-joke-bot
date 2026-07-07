@@ -1,3 +1,4 @@
+# ─── RAG-пайплайн (core) ──────────────────────────────────────────────
 chromadb==0.5.23
 sentence-transformers==3.3.1
 fastapi==0.115.6
@@ -5,3 +6,17 @@ uvicorn[standard]==0.34.0
 pydantic==2.10.4
 httpx==0.28.1
 python-dotenv==1.0.1
+
+# ─── TTS-клиент (для tts_client.py) ───────────────────────────────────
+pyaudio==0.2.14
+
+# ─── TTS-сервер и подготовка аудио ставятся ОТДЕЛЬНО ──────────────────
+# См. TTS_README.md. Они конфликтуют с RAG-зависимостями, поэтому:
+#
+# GPT-SoVITS (для tts_server.py):
+#   git clone https://github.com/RVC-Boss/GPT-SoVITS
+#   cd GPT-SoVITS && pip install -r requirements.txt
+#
+# Подготовка аудио (для audio_prep.py):
+#   pip install openai-whisper torch torchaudio demucs
+#   + ffmpeg в системе
