@@ -1,49 +1,7 @@
-# Data & models (большие файлы, не в git)
-data/
-*.db
-*.sqlite
-chroma_db/
-*.wav
-*.mp3
-*.ogg
-*.pt
-*.bin
-*.onnx
-*.gguf
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-.venv/
-env/
+# Secrets & env
 .env
 .env.*
 !.env.example
-ENV/
-*.egg-info/
-.pytest_cache/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# Логи
-*.log
-logs/
-scripts/scraper.log
-
-# Секреты — НИКОГДА не коммитить
-secrets/
-*.token
-credentials.json
 
 # Skills system (private)
 skills/
@@ -51,6 +9,21 @@ skills/
 # Node
 node_modules/
 
-# Тестовые дампы скрапера
+# Test HTML dumps & probe scripts
 scripts/_*.html
 scripts/_*.py
+scripts/scraper.log
+
+# Tool results (internal)
+tool-results/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
