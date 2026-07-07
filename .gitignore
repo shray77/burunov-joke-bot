@@ -1,0 +1,42 @@
+# Data & models (большие файлы, не в git)
+data/
+*.db
+*.sqlite
+chroma_db/
+*.wav
+*.mp3
+*.ogg
+*.pt
+*.bin
+*.onnx
+*.gguf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.env
+ENV/
+*.egg-info/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Логи
+*.log
+logs/
+
+# Секреты — НИКОГДА не коммитить
+secrets/
+*.token
+credentials.json
