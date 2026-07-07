@@ -1,0 +1,1460 @@
+=== Raw parts (730) ===
+  [0] Сообщить о качестве файла
+  [1] nexusstc/
+  [2] Анекдоты. Милицейские будни/
+  [3] 335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf
+  [4] Анекдоты. Милицейские будни
+  [5] 🔍
+  [6] [Сост. А. И. Сонин]
+  [7] Лана, Библиотечка тематического анекдота, М, 1995
+  [8] русский [ru] · PDF · 7.8MB · 1995 · 📘 Книга (Документальная) · 🚀/lgli/lgrs/nexusstc/zlib    ·
+  [9] Save
+  [10] описание
+  [11] В сборник включены лучшие анекдоты, присланные на конкурс в издательство «Лана».
+  [12] Альтернативное имя файла
+  [13] lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [14] Альтернативное имя файла
+  [15] lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [16] Альтернативное имя файла
+  [17] zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf
+  [18] Альтернативное название
+  [19] Милицейские будни: Анекдоты
+  [20] Альтернативный автор
+  [21] Сонин, А.И
+  [22] Альтернативный издатель
+  [23] Lana
+  [24] Альтернативное издание
+  [25] Russia, Russian Federation
+  [26] комментарии к метаданным
+  [27] lg1541645
+  [28] комментарии к метаданным
+  [29] {"isbns":["5883311040","9785883311047"],"publisher":"Лана"}
+  [30] комментарии к метаданным
+  [31] Прил. к развлекат. газ. "ЧтиВО"
+  [32] комментарии к метаданным
+  [33] РГБ
+  [34] комментарии к метаданным
+  [35] Russian State Library [rgb] MARC:
+  [36] =001  001724694
+  [37] =003  RuMoRGB
+  [38] =005  20021218120000.0
+  [39] =008  020227s1995\\\\
+  [40] \\\\
+  [41] \\\\u\\\\
+  [42] rus\d
+  [43] =015  \\ $a 96-6832 $2 Книжная летопись
+  [44] =017  \\ $a 95-35441 $b РКП
+  [45] =020  \\ $a 5-88331-104-0 $c Б. ц.
+  [46] =035  \\ $a (RuMoRKP)ru95-35441
+  [47] =040  \\ $a RKP $b rus $e PSBO
+  [48] =041  0\ $a rus
+  [49] =080  \\ $a 882-7
+  [50] =080  \\ $a 398.23
+  [51] =084  \\ $a 17 $2 rugasnti
+  [52] =084  \\ $a 84(2Рос-Рус) $2 rubbkm
+  [53] =245  10 $a Милицейские будни $b Анекдоты $c [Сост. А. И. Сонин]
+  [54] =260  \\ $a М. $b Лана $c 1995
+  [55] =300  \\ $a 31 с. $c 20 см
+  [56] =490  0\ $a Библиотечка тематического анекдота
+  [57] =580  \\ $a Прил. к развлекат. газ. "ЧтиВО"
+  [58] =653  0\ $a Анекдоты (х. л.)
+  [59] =700  1\ $a Сонин, А.И. $e авт. $4 aut
+  [60] =852  \\ $a РГБ $b FB $j 10 95-28/86 $x 90
+  [61] =852  \\ $a РГБ $b FB $j 10 95-28/87 $x 90
+  [62] дата открытого доступа
+  [63] 2016-08-14
+  [64] ISBN-13
+  [65] 978-5-88331-104-7
+  [66] ISBN-10
+  [67] 5-88331-104-0
+  [68] AacId
+  [69] aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC
+  [70] AacId
+  [71] aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX
+  [72] AacId
+  [73] aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X
+  [74] AacId
+  [75] aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn
+  [76] AA Record ID
+  [77] md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [78] Collection
+  [79] lgli
+  [80] Collection
+  [81] lgrs
+  [82] Collection
+  [83] nexusstc
+  [84] Collection
+  [85] zlib
+  [86] Content Type
+  [87] book_nonfiction
+  [88] SHA-256
+  [89] 537beffa
+  [90] ISBN GRP Source Scrape Date
+  [91] 2024-09-20
+  [92] Libgen.li Source Date
+  [93] 2016-08-14
+  [94] Libgen.rs Non-Fiction Date
+  [95] 2016-08-14
+  [96] Nexus/STC Source issued_at Date
+  [97] 1995-01-01
+  [98] Nexus/STC Source Updated Date
+  [99] 2024-05-16
+  [100] Russian State Library Source Scrape Date
+  [101] 2024-09-19
+  [102] Z-Library Source Date
+  [103] 2019-04-09
+  [104] Filepath
+  [105] lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [106] Filepath
+  [107] lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [108] Filepath
+  [109] nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf
+  [110] Filepath
+  [111] zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf
+  [112] Filesize
+  [113] 7785101
+  [114] IPFS CID
+  [115] QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1
+  [116] IPFS CID
+  [117] bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc
+  [118] IPFS CID
+  [119] bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk
+  [120] ISBN GRP ID
+  [121] db607448228904f44db10f2b35ba76b5
+  [122] Language
+  [123] ru
+  [124] Libgen.li File
+  [125] 92569440
+  [126] Libgen.li libgen_id
+  [127] 1541645
+  [128] Libgen.rs Non-Fiction
+  [129] 1541645
+  [130] Libgen.rs Non-Fiction Topic
+  [131] literature\\prose
+  [132] MD5
+  [133] 335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [134] Nexus/STC
+  [135] 6sow91mca7rcrlk4mo4ne48ps
+  [136] Nexus/STC Tag
+  [137] Анекдоты
+  [138] Nexus/STC Tag
+  [139] Библиотека
+  [140] Nexus/STC Tag
+  [141] Юмор и сатира
+  [142] Russian State Library ID
+  [143] 001724694
+  [144] Russian State Library ID
+  [145] 1724694
+  [146] Server Path
+  [147] g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [148] SHA-1
+  [149] mbhgv7utsudvjgsev76ilsh4um2pfwa2
+  [150] SHA-256
+  [151] e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3
+  [152] Torrent
+  [153] external/libgen_rs_non_fic/r_1541000.torrent
+  [154] Year
+  [155] 1995
+  [156] Z-Library
+  [157] 2750334
+  [158] Zlib Category ID
+  [159] 770
+  [160] Zlib Category Name
+  [161] Fiction/Others
+  [162] ISBN-13:
+  [163] копировать
+  [164] скопировано!
+  [165] 978-5-88331-104-7
+  [166] /
+  [167] копировать
+  [168] скопировано!
+  [169] 9785883311047
+  [170] URL:
+  [171] https://en.wikipedia.org/wiki/Special:BookSources?isbn=9785883311047
+  [172] Веб-сайт:
+  [173] https://en.wikipedia.org/wiki/ISBN
+  [174] АА:
+  [175] Поиск в Архиве Анны по «isbn13:9785883311047»
+  [176] Исследователь кодов:
+  [177] Просмотреть в Исследователе кодов «isbn13:9785883311047»
+  [178] ISBN-10:
+  [179] копировать
+  [180] скопировано!
+  [181] 5-88331-104-0
+  [182] /
+  [183] копировать
+  [184] скопировано!
+  [185] 5883311040
+  [186] URL:
+  [187] https://en.wikipedia.org/wiki/Special:BookSources?isbn=5883311040
+  [188] Веб-сайт:
+  [189] https://en.wikipedia.org/wiki/ISBN
+  [190] АА:
+  [191] Поиск в Архиве Анны по «isbn10:5883311040»
+  [192] Исследователь кодов:
+  [193] Просмотреть в Исследователе кодов «isbn10:5883311040»
+  [194] AacId:
+  [195] копировать
+  [196] скопировано!
+  [197] aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC
+  [198] Anna’s Archive Container identifier.
+  [199] URL:
+  [200] /db/aac_record/aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC.json.html
+  [201] Веб-сайт:
+  [202] /blog/annas-archive-containers.html
+  [203] АА:
+  [204] Поиск в Архиве Анны по «aacid:aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC»
+  [205] Исследователь кодов:
+  [206] Просмотреть в Исследователе кодов «aacid:aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC»
+  [207] AacId:
+  [208] копировать
+  [209] скопировано!
+  [210] aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX
+  [211] Anna’s Archive Container identifier.
+  [212] URL:
+  [213] /db/aac_record/aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX.json.html
+  [214] Веб-сайт:
+  [215] /blog/annas-archive-containers.html
+  [216] АА:
+  [217] Поиск в Архиве Анны по «aacid:aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX»
+  [218] Исследователь кодов:
+  [219] Просмотреть в Исследователе кодов «aacid:aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX»
+  [220] AacId:
+  [221] копировать
+  [222] скопировано!
+  [223] aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X
+  [224] Anna’s Archive Container identifier.
+  [225] URL:
+  [226] /db/aac_record/aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X.json.html
+  [227] Веб-сайт:
+  [228] /blog/annas-archive-containers.html
+  [229] АА:
+  [230] Поиск в Архиве Анны по «aacid:aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X»
+  [231] Исследователь кодов:
+  [232] Просмотреть в Исследователе кодов «aacid:aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X»
+  [233] AacId:
+  [234] копировать
+  [235] скопировано!
+  [236] aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn
+  [237] Anna’s Archive Container identifier.
+  [238] URL:
+  [239] /db/aac_record/aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn.json.html
+  [240] Веб-сайт:
+  [241] /blog/annas-archive-containers.html
+  [242] АА:
+  [243] Поиск в Архиве Анны по «aacid:aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn»
+  [244] Исследователь кодов:
+  [245] Просмотреть в Исследователе кодов «aacid:aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn»
+  [246] AA Record ID:
+  [247] копировать
+  [248] скопировано!
+  [249] md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [250] Anna’s Archive record ID.
+  [251] АА:
+  [252] Поиск в Архиве Анны по «aarecord_id:md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [253] Исследователь кодов:
+  [254] Просмотреть в Исследователе кодов «aarecord_id:md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [255] Collection:
+  [256] копировать
+  [257] скопировано!
+  [258] lgli
+  [259] The collection on Anna’s Archive that provided data for this record.
+  [260] URL:
+  [261] /datasets/lgli
+  [262] Веб-сайт:
+  [263] /datasets
+  [264] АА:
+  [265] Поиск в Архиве Анны по «collection:lgli»
+  [266] Исследователь кодов:
+  [267] Просмотреть в Исследователе кодов «collection:lgli»
+  [268] Collection:
+  [269] копировать
+  [270] скопировано!
+  [271] lgrs
+  [272] The collection on Anna’s Archive that provided data for this record.
+  [273] URL:
+  [274] /datasets/lgrs
+  [275] Веб-сайт:
+  [276] /datasets
+  [277] АА:
+  [278] Поиск в Архиве Анны по «collection:lgrs»
+  [279] Исследователь кодов:
+  [280] Просмотреть в Исследователе кодов «collection:lgrs»
+  [281] Collection:
+  [282] копировать
+  [283] скопировано!
+  [284] nexusstc
+  [285] The collection on Anna’s Archive that provided data for this record.
+  [286] URL:
+  [287] /datasets/nexusstc
+  [288] Веб-сайт:
+  [289] /datasets
+  [290] АА:
+  [291] Поиск в Архиве Анны по «collection:nexusstc»
+  [292] Исследователь кодов:
+  [293] Просмотреть в Исследователе кодов «collection:nexusstc»
+  [294] Collection:
+  [295] копировать
+  [296] скопировано!
+  [297] zlib
+  [298] The collection on Anna’s Archive that provided data for this record.
+  [299] URL:
+  [300] /datasets/zlib
+  [301] Веб-сайт:
+  [302] /datasets
+  [303] АА:
+  [304] Поиск в Архиве Анны по «collection:zlib»
+  [305] Исследователь кодов:
+  [306] Просмотреть в Исследователе кодов «collection:zlib»
+  [307] Content Type:
+  [308] копировать
+  [309] скопировано!
+  [310] book_nonfiction
+  [311] Content type, determined by Anna’s Archive.
+  [312] АА:
+  [313] Поиск в Архиве Анны по «content_type:book_nonfiction»
+  [314] Исследователь кодов:
+  [315] Просмотреть в Исследователе кодов «content_type:book_nonfiction»
+  [316] SHA-256:
+  [317] копировать
+  [318] скопировано!
+  [319] 537beffa
+  [320] Веб-сайт:
+  [321] https://en.wikipedia.org/wiki/CRC32
+  [322] АА:
+  [323] Поиск в Архиве Анны по «crc32:537beffa»
+  [324] Исследователь кодов:
+  [325] Просмотреть в Исследователе кодов «crc32:537beffa»
+  [326] ISBN GRP Source Scrape Date:
+  [327] копировать
+  [328] скопировано!
+  [329] 2024-09-20
+  [330] Date Anna’s Archive scraped the ISBN GRP collection.
+  [331] Веб-сайт:
+  [332] /datasets/isbngrp
+  [333] АА:
+  [334] Поиск в Архиве Анны по «date_isbngrp_meta_scrape:2024-09-20»
+  [335] Исследователь кодов:
+  [336] Просмотреть в Исследователе кодов «date_isbngrp_meta_scrape:2024-09-20»
+  [337] Libgen.li Source Date:
+  [338] копировать
+  [339] скопировано!
+  [340] 2016-08-14
+  [341] Date Libgen.li published this file.
+  [342] Веб-сайт:
+  [343] /datasets/lgli
+  [344] АА:
+  [345] Поиск в Архиве Анны по «date_lgli_source:2016-08-14»
+  [346] Исследователь кодов:
+  [347] Просмотреть в Исследователе кодов «date_lgli_source:2016-08-14»
+  [348] Libgen.rs Non-Fiction Date:
+  [349] копировать
+  [350] скопировано!
+  [351] 2016-08-14
+  [352] Date Libgen.rs Non_Fiction published this file.
+  [353] Веб-сайт:
+  [354] /datasets/lgrs
+  [355] АА:
+  [356] Поиск в Архиве Анны по «date_lgrsnf_source:2016-08-14»
+  [357] Исследователь кодов:
+  [358] Просмотреть в Исследователе кодов «date_lgrsnf_source:2016-08-14»
+  [359] Nexus/STC Source issued_at Date:
+  [360] копировать
+  [361] скопировано!
+  [362] 1995-01-01
+  [363] Date Nexus/STC reports in their issued_at field, which is the “issuing time of the item described by record.”
+  [364] Веб-сайт:
+  [365] /datasets/nexusstc
+  [366] АА:
+  [367] Поиск в Архиве Анны по «date_nexusstc_source_issued_at:1995-01-01»
+  [368] Исследователь кодов:
+  [369] Просмотреть в Исследователе кодов «date_nexusstc_source_issued_at:1995-01-01»
+  [370] Nexus/STC Source Updated Date:
+  [371] копировать
+  [372] скопировано!
+  [373] 2024-05-16
+  [374] Date Nexus/STC last updated this record.
+  [375] Веб-сайт:
+  [376] /datasets/nexusstc
+  [377] АА:
+  [378] Поиск в Архиве Анны по «date_nexusstc_source_update:2024-05-16»
+  [379] Исследователь кодов:
+  [380] Просмотреть в Исследователе кодов «date_nexusstc_source_update:2024-05-16»
+  [381] Russian State Library Source Scrape Date:
+  [382] копировать
+  [383] скопировано!
+  [384] 2024-09-19
+  [385] Date Anna’s Archive scraped the Russian State Library collection.
+  [386] Веб-сайт:
+  [387] /datasets/rgb
+  [388] АА:
+  [389] Поиск в Архиве Анны по «date_rgb_meta_scrape:2024-09-19»
+  [390] Исследователь кодов:
+  [391] Просмотреть в Исследователе кодов «date_rgb_meta_scrape:2024-09-19»
+  [392] Z-Library Source Date:
+  [393] копировать
+  [394] скопировано!
+  [395] 2019-04-09
+  [396] Date Z-Library published this file.
+  [397] Веб-сайт:
+  [398] /datasets/zlib
+  [399] АА:
+  [400] Поиск в Архиве Анны по «date_zlib_source:2019-04-09»
+  [401] Исследователь кодов:
+  [402] Просмотреть в Исследователе кодов «date_zlib_source:2019-04-09»
+  [403] Filepath:
+  [404] копировать
+  [405] скопировано!
+  [406] lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [407] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [408] АА:
+  [409] Поиск в Архиве Анны по «filepath:lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [410] Исследователь кодов:
+  [411] Просмотреть в Исследователе кодов «filepath:lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [412] Filepath:
+  [413] копировать
+  [414] скопировано!
+  [415] lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [416] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [417] АА:
+  [418] Поиск в Архиве Анны по «filepath:lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [419] Исследователь кодов:
+  [420] Просмотреть в Исследователе кодов «filepath:lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [421] Filepath:
+  [422] копировать
+  [423] скопировано!
+  [424] nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf
+  [425] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [426] АА:
+  [427] Поиск в Архиве Анны по «filepath:nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf»
+  [428] Исследователь кодов:
+  [429] Просмотреть в Исследователе кодов «filepath:nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf»
+  [430] Filepath:
+  [431] копировать
+  [432] скопировано!
+  [433] zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf
+  [434] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [435] АА:
+  [436] Поиск в Архиве Анны по «filepath:zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf»
+  [437] Исследователь кодов:
+  [438] Просмотреть в Исследователе кодов «filepath:zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf»
+  [439] Filesize:
+  [440] копировать
+  [441] скопировано!
+  [442] 7785101
+  [443] Filesize in bytes.
+  [444] АА:
+  [445] Поиск в Архиве Анны по «filesize_bytes:7785101»
+  [446] Исследователь кодов:
+  [447] Просмотреть в Исследователе кодов «filesize_bytes:7785101»
+  [448] IPFS CID:
+  [449] копировать
+  [450] скопировано!
+  [451] QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1
+  [452] Content Identifier (CID) of the InterPlanetary File System (IPFS).
+  [453] URL:
+  [454] ipfs://QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1
+  [455] Веб-сайт:
+  [456] https://ipfs.tech/
+  [457] АА:
+  [458] Поиск в Архиве Анны по «ipfs_cid:QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1»
+  [459] Исследователь кодов:
+  [460] Просмотреть в Исследователе кодов «ipfs_cid:QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1»
+  [461] IPFS CID:
+  [462] копировать
+  [463] скопировано!
+  [464] bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc
+  [465] Content Identifier (CID) of the InterPlanetary File System (IPFS).
+  [466] URL:
+  [467] ipfs://bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc
+  [468] Веб-сайт:
+  [469] https://ipfs.tech/
+  [470] АА:
+  [471] Поиск в Архиве Анны по «ipfs_cid:bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc»
+  [472] Исследователь кодов:
+  [473] Просмотреть в Исследователе кодов «ipfs_cid:bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc»
+  [474] IPFS CID:
+  [475] копировать
+  [476] скопировано!
+  [477] bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk
+  [478] Content Identifier (CID) of the InterPlanetary File System (IPFS).
+  [479] URL:
+  [480] ipfs://bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk
+  [481] Веб-сайт:
+  [482] https://ipfs.tech/
+  [483] АА:
+  [484] Поиск в Архиве Анны по «ipfs_cid:bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk»
+  [485] Исследователь кодов:
+  [486] Просмотреть в Исследователе кодов «ipfs_cid:bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk»
+  [487] ISBN GRP ID:
+  [488] копировать
+  [489] скопировано!
+  [490] db607448228904f44db10f2b35ba76b5
+  [491] ISBN GRP ID.
+  [492] URL:
+  [493] /isbngrp/db607448228904f44db10f2b35ba76b5
+  [494] Веб-сайт:
+  [495] /datasets/isbngrp
+  [496] АА:
+  [497] Поиск в Архиве Анны по «isbngrp:db607448228904f44db10f2b35ba76b5»
+  [498] Исследователь кодов:
+  [499] Просмотреть в Исследователе кодов «isbngrp:db607448228904f44db10f2b35ba76b5»
+  [500] Language:
+  [501] копировать
+  [502] скопировано!
+  [503] ru
+  [504] IETF language tag.
+  [505] Веб-сайт:
+  [506] https://en.wikipedia.org/wiki/IETF_language_tag
+  [507] АА:
+  [508] Поиск в Архиве Анны по «lang:ru»
+  [509] Исследователь кодов:
+  [510] Просмотреть в Исследователе кодов «lang:ru»
+  [511] Libgen.li File:
+  [512] копировать
+  [513] скопировано!
+  [514] 92569440
+  [515] Global file ID in Libgen.li. Directly taken from the 'f_id' field in the 'files' table.
+  [516] URL:
+  [517] https://libgen.li/file.php?id=92569440
+  [518] Веб-сайт:
+  [519] /datasets/lgli
+  [520] АА:
+  [521] Поиск в Архиве Анны по «lgli:92569440»
+  [522] Исследователь кодов:
+  [523] Просмотреть в Исследователе кодов «lgli:92569440»
+  [524] Libgen.li libgen_id:
+  [525] копировать
+  [526] скопировано!
+  [527] 1541645
+  [528] Repository ID for the 'libgen' repository in Libgen.li. Directly taken from the 'libgen_id' field in the 'files' table. Corresponds to the 'thousands folder' torrents.
+  [529] Веб-сайт:
+  [530] /datasets/lgli
+  [531] АА:
+  [532] Поиск в Архиве Анны по «lgli_libgen_id:1541645»
+  [533] Исследователь кодов:
+  [534] Просмотреть в Исследователе кодов «lgli_libgen_id:1541645»
+  [535] Libgen.rs Non-Fiction:
+  [536] копировать
+  [537] скопировано!
+  [538] 1541645
+  [539] Repository ID for the non-fiction ('libgen') repository in Libgen.rs. Directly taken from the 'id' field in the 'updated' table. Corresponds to the 'thousands folder' torrents.
+  [540] URL:
+  [541] https://libgen.is/json.php?fields=*&ids=1541645
+  [542] Веб-сайт:
+  [543] /datasets/lgrs
+  [544] АА:
+  [545] Поиск в Архиве Анны по «lgrsnf:1541645»
+  [546] Исследователь кодов:
+  [547] Просмотреть в Исследователе кодов «lgrsnf:1541645»
+  [548] Libgen.rs Non-Fiction Topic:
+  [549] копировать
+  [550] скопировано!
+  [551] literature\\prose
+  [552] Libgen’s own classification system of 'topics' for non-fiction books. Obtained from the 'topic' metadata field, using the 'topics' database table, which seems to have its roots in the Kolxo3 library t
+  [553] Веб-сайт:
+  [554] /datasets/lgrs
+  [555] АА:
+  [556] Поиск в Архиве Анны по «lgrsnf_topic:literature\\prose»
+  [557] Исследователь кодов:
+  [558] Просмотреть в Исследователе кодов «lgrsnf_topic:literature\\prose»
+  [559] MD5:
+  [560] копировать
+  [561] скопировано!
+  [562] 335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [563] Веб-сайт:
+  [564] https://en.wikipedia.org/wiki/MD5
+  [565] АА:
+  [566] Поиск в Архиве Анны по «md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [567] Исследователь кодов:
+  [568] Просмотреть в Исследователе кодов «md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [569] Nexus/STC:
+  [570] копировать
+  [571] скопировано!
+  [572] 6sow91mca7rcrlk4mo4ne48ps
+  [573] ID of an individual edition of a file in Nexus/STC.
+  [574] URL:
+  [575] https://libstc.cc/#/stc/nid:6sow91mca7rcrlk4mo4ne48ps
+  [576] Веб-сайт:
+  [577] /datasets/nexusstc
+  [578] АА:
+  [579] Поиск в Архиве Анны по «nexusstc:6sow91mca7rcrlk4mo4ne48ps»
+  [580] Исследователь кодов:
+  [581] Просмотреть в Исследователе кодов «nexusstc:6sow91mca7rcrlk4mo4ne48ps»
+  [582] Nexus/STC Tag:
+  [583] копировать
+  [584] скопировано!
+  [585] Анекдоты
+  [586] Tag in Nexus/STC.
+  [587] Веб-сайт:
+  [588] /datasets/nexusstc
+  [589] АА:
+  [590] Поиск в Архиве Анны по «nexusstc_tag:Анекдоты»
+  [591] Исследователь кодов:
+  [592] Просмотреть в Исследователе кодов «nexusstc_tag:Анекдоты»
+  [593] Nexus/STC Tag:
+  [594] копировать
+  [595] скопировано!
+  [596] Библиотека
+  [597] Tag in Nexus/STC.
+  [598] Веб-сайт:
+  [599] /datasets/nexusstc
+  [600] АА:
+  [601] Поиск в Архиве Анны по «nexusstc_tag:Библиотека»
+  [602] Исследователь кодов:
+  [603] Просмотреть в Исследователе кодов «nexusstc_tag:Библиотека»
+  [604] Nexus/STC Tag:
+  [605] копировать
+  [606] скопировано!
+  [607] Юмор и сатира
+  [608] Tag in Nexus/STC.
+  [609] Веб-сайт:
+  [610] /datasets/nexusstc
+  [611] АА:
+  [612] Поиск в Архиве Анны по «nexusstc_tag:Юмор и сатира»
+  [613] Исследователь кодов:
+  [614] Просмотреть в Исследователе кодов «nexusstc_tag:Юмор и сатира»
+  [615] Russian State Library ID:
+  [616] копировать
+  [617] скопировано!
+  [618] 001724694
+  [619] Russian State Library ID.
+  [620] URL:
+  [621] /rgb/001724694
+  [622] Веб-сайт:
+  [623] /datasets/rgb
+  [624] АА:
+  [625] Поиск в Архиве Анны по «rgb:001724694»
+  [626] Исследователь кодов:
+  [627] Просмотреть в Исследователе кодов «rgb:001724694»
+  [628] Russian State Library ID:
+  [629] копировать
+  [630] скопировано!
+  [631] 1724694
+  [632] Russian State Library ID.
+  [633] URL:
+  [634] /rgb/1724694
+  [635] Веб-сайт:
+  [636] /datasets/rgb
+  [637] АА:
+  [638] Поиск в Архиве Анны по «rgb:1724694»
+  [639] Исследователь кодов:
+  [640] Просмотреть в Исследователе кодов «rgb:1724694»
+  [641] Server Path:
+  [642] копировать
+  [643] скопировано!
+  [644] g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [645] Path on Anna’s Archive partner servers.
+  [646] АА:
+  [647] Поиск в Архиве Анны по «server_path:g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [648] Исследователь кодов:
+  [649] Просмотреть в Исследователе кодов «server_path:g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [650] SHA-1:
+  [651] копировать
+  [652] скопировано!
+  [653] mbhgv7utsudvjgsev76ilsh4um2pfwa2
+  [654] Веб-сайт:
+  [655] https://en.wikipedia.org/wiki/SHA-1
+  [656] АА:
+  [657] Поиск в Архиве Анны по «sha1:mbhgv7utsudvjgsev76ilsh4um2pfwa2»
+  [658] Исследователь кодов:
+  [659] Просмотреть в Исследователе кодов «sha1:mbhgv7utsudvjgsev76ilsh4um2pfwa2»
+  [660] SHA-256:
+  [661] копировать
+  [662] скопировано!
+  [663] e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3
+  [664] Веб-сайт:
+  [665] https://en.wikipedia.org/wiki/SHA-2
+  [666] АА:
+  [667] Поиск в Архиве Анны по «sha256:e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3»
+  [668] Исследователь кодов:
+  [669] Просмотреть в Исследователе кодов «sha256:e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3»
+  [670] Torrent:
+  [671] копировать
+  [672] скопировано!
+  [673] external/libgen_rs_non_fic/r_1541000.torrent
+  [674] Bulk torrent for long-term preservation.
+  [675] URL:
+  [676] /dyn/small_file/torrents/external/libgen_rs_non_fic/r_1541000.torrent
+  [677] Веб-сайт:
+  [678] /torrents
+  [679] АА:
+  [680] Поиск в Архиве Анны по «torrent:external/libgen_rs_non_fic/r_1541000.torrent»
+  [681] Исследователь кодов:
+  [682] Просмотреть в Исследователе кодов «torrent:external/libgen_rs_non_fic/r_1541000.torrent»
+  [683] Year:
+  [684] копировать
+  [685] скопировано!
+  [686] 1995
+  [687] Publication year.
+  [688] АА:
+  [689] Поиск в Архиве Анны по «year:1995»
+  [690] Исследователь кодов:
+  [691] Просмотреть в Исследователе кодов «year:1995»
+  [692] Z-Library:
+  [693] копировать
+  [694] скопировано!
+  [695] 2750334
+  [696] ID in Z-Library.
+  [697] URL:
+  [698] https://z-lib.gd/
+  [699] Веб-сайт:
+  [700] /datasets/zlib
+  [701] АА:
+  [702] Поиск в Архиве Анны по «zlib:2750334»
+  [703] Исследователь кодов:
+  [704] Просмотреть в Исследователе кодов «zlib:2750334»
+  [705] Zlib Category ID:
+  [706] копировать
+  [707] скопировано!
+  [708] 770
+  [709] Category ID on the Z-Library website.
+  [710] URL:
+  [711] https://z-lib.gd/category/770
+  [712] Веб-сайт:
+  [713] https://z-lib.gs/categories
+  [714] АА:
+  [715] Поиск в Архиве Анны по «zlib_category_id:770»
+  [716] Исследователь кодов:
+  [717] Просмотреть в Исследователе кодов «zlib_category_id:770»
+  [718] Zlib Category Name:
+  [719] копировать
+  [720] скопировано!
+  [721] Fiction/Others
+  [722] Name for the zlib_category_id (category ID on the Z-Library website).
+  [723] Веб-сайт:
+  [724] https://z-lib.gs/categories
+  [725] АА:
+  [726] Поиск в Архиве Анны по «zlib_category_name:Fiction/Others»
+  [727] Исследователь кодов:
+  [728] Просмотреть в Исследователе кодов «zlib_category_name:Fiction/Others»
+  [729] Подробнее…
+
+=== Clean parts (727) ===
+  [0] Анекдоты. Милицейские будни/
+  [1] 335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf
+  [2] Анекдоты. Милицейские будни
+  [3] [Сост. А. И. Сонин]
+  [4] Лана, Библиотечка тематического анекдота, М, 1995
+  [5] русский [ru] · PDF · 7.8MB · 1995 · 📘 Книга (Документальная) · 🚀/lgli/lgrs/nexusstc/zlib    ·
+  [6] Save
+  [7] описание
+  [8] В сборник включены лучшие анекдоты, присланные на конкурс в издательство «Лана».
+  [9] Альтернативное имя файла
+  [10] lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [11] Альтернативное имя файла
+  [12] lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [13] Альтернативное имя файла
+  [14] zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf
+  [15] Альтернативное название
+  [16] Милицейские будни: Анекдоты
+  [17] Альтернативный автор
+  [18] Сонин, А.И
+  [19] Альтернативный издатель
+  [20] Lana
+  [21] Альтернативное издание
+  [22] Russia, Russian Federation
+  [23] комментарии к метаданным
+  [24] lg1541645
+  [25] комментарии к метаданным
+  [26] {"isbns":["5883311040","9785883311047"],"publisher":"Лана"}
+  [27] комментарии к метаданным
+  [28] Прил. к развлекат. газ. "ЧтиВО"
+  [29] комментарии к метаданным
+  [30] РГБ
+  [31] комментарии к метаданным
+  [32] Russian State Library [rgb] MARC:
+  [33] =001  001724694
+  [34] =003  RuMoRGB
+  [35] =005  20021218120000.0
+  [36] =008  020227s1995\\\\
+  [37] \\\\
+  [38] \\\\u\\\\
+  [39] rus\d
+  [40] =015  \\ $a 96-6832 $2 Книжная летопись
+  [41] =017  \\ $a 95-35441 $b РКП
+  [42] =020  \\ $a 5-88331-104-0 $c Б. ц.
+  [43] =035  \\ $a (RuMoRKP)ru95-35441
+  [44] =040  \\ $a RKP $b rus $e PSBO
+  [45] =041  0\ $a rus
+  [46] =080  \\ $a 882-7
+  [47] =080  \\ $a 398.23
+  [48] =084  \\ $a 17 $2 rugasnti
+  [49] =084  \\ $a 84(2Рос-Рус) $2 rubbkm
+  [50] =245  10 $a Милицейские будни $b Анекдоты $c [Сост. А. И. Сонин]
+  [51] =260  \\ $a М. $b Лана $c 1995
+  [52] =300  \\ $a 31 с. $c 20 см
+  [53] =490  0\ $a Библиотечка тематического анекдота
+  [54] =580  \\ $a Прил. к развлекат. газ. "ЧтиВО"
+  [55] =653  0\ $a Анекдоты (х. л.)
+  [56] =700  1\ $a Сонин, А.И. $e авт. $4 aut
+  [57] =852  \\ $a РГБ $b FB $j 10 95-28/86 $x 90
+  [58] =852  \\ $a РГБ $b FB $j 10 95-28/87 $x 90
+  [59] дата открытого доступа
+  [60] 2016-08-14
+  [61] ISBN-13
+  [62] 978-5-88331-104-7
+  [63] ISBN-10
+  [64] 5-88331-104-0
+  [65] AacId
+  [66] aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC
+  [67] AacId
+  [68] aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX
+  [69] AacId
+  [70] aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X
+  [71] AacId
+  [72] aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn
+  [73] AA Record ID
+  [74] md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [75] Collection
+  [76] lgli
+  [77] Collection
+  [78] lgrs
+  [79] Collection
+  [80] nexusstc
+  [81] Collection
+  [82] zlib
+  [83] Content Type
+  [84] book_nonfiction
+  [85] SHA-256
+  [86] 537beffa
+  [87] ISBN GRP Source Scrape Date
+  [88] 2024-09-20
+  [89] Libgen.li Source Date
+  [90] 2016-08-14
+  [91] Libgen.rs Non-Fiction Date
+  [92] 2016-08-14
+  [93] Nexus/STC Source issued_at Date
+  [94] 1995-01-01
+  [95] Nexus/STC Source Updated Date
+  [96] 2024-05-16
+  [97] Russian State Library Source Scrape Date
+  [98] 2024-09-19
+  [99] Z-Library Source Date
+  [100] 2019-04-09
+  [101] Filepath
+  [102] lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [103] Filepath
+  [104] lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [105] Filepath
+  [106] nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf
+  [107] Filepath
+  [108] zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf
+  [109] Filesize
+  [110] 7785101
+  [111] IPFS CID
+  [112] QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1
+  [113] IPFS CID
+  [114] bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc
+  [115] IPFS CID
+  [116] bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk
+  [117] ISBN GRP ID
+  [118] db607448228904f44db10f2b35ba76b5
+  [119] Language
+  [120] ru
+  [121] Libgen.li File
+  [122] 92569440
+  [123] Libgen.li libgen_id
+  [124] 1541645
+  [125] Libgen.rs Non-Fiction
+  [126] 1541645
+  [127] Libgen.rs Non-Fiction Topic
+  [128] literature\\prose
+  [129] MD5
+  [130] 335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [131] Nexus/STC
+  [132] 6sow91mca7rcrlk4mo4ne48ps
+  [133] Nexus/STC Tag
+  [134] Анекдоты
+  [135] Nexus/STC Tag
+  [136] Библиотека
+  [137] Nexus/STC Tag
+  [138] Юмор и сатира
+  [139] Russian State Library ID
+  [140] 001724694
+  [141] Russian State Library ID
+  [142] 1724694
+  [143] Server Path
+  [144] g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [145] SHA-1
+  [146] mbhgv7utsudvjgsev76ilsh4um2pfwa2
+  [147] SHA-256
+  [148] e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3
+  [149] Torrent
+  [150] external/libgen_rs_non_fic/r_1541000.torrent
+  [151] Year
+  [152] 1995
+  [153] Z-Library
+  [154] 2750334
+  [155] Zlib Category ID
+  [156] 770
+  [157] Zlib Category Name
+  [158] Fiction/Others
+  [159] ISBN-13:
+  [160] копировать
+  [161] скопировано!
+  [162] 978-5-88331-104-7
+  [163] /
+  [164] копировать
+  [165] скопировано!
+  [166] 9785883311047
+  [167] URL:
+  [168] https://en.wikipedia.org/wiki/Special:BookSources?isbn=9785883311047
+  [169] Веб-сайт:
+  [170] https://en.wikipedia.org/wiki/ISBN
+  [171] АА:
+  [172] Поиск в Архиве Анны по «isbn13:9785883311047»
+  [173] Исследователь кодов:
+  [174] Просмотреть в Исследователе кодов «isbn13:9785883311047»
+  [175] ISBN-10:
+  [176] копировать
+  [177] скопировано!
+  [178] 5-88331-104-0
+  [179] /
+  [180] копировать
+  [181] скопировано!
+  [182] 5883311040
+  [183] URL:
+  [184] https://en.wikipedia.org/wiki/Special:BookSources?isbn=5883311040
+  [185] Веб-сайт:
+  [186] https://en.wikipedia.org/wiki/ISBN
+  [187] АА:
+  [188] Поиск в Архиве Анны по «isbn10:5883311040»
+  [189] Исследователь кодов:
+  [190] Просмотреть в Исследователе кодов «isbn10:5883311040»
+  [191] AacId:
+  [192] копировать
+  [193] скопировано!
+  [194] aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC
+  [195] Anna’s Archive Container identifier.
+  [196] URL:
+  [197] /db/aac_record/aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC.json.html
+  [198] Веб-сайт:
+  [199] /blog/annas-archive-containers.html
+  [200] АА:
+  [201] Поиск в Архиве Анны по «aacid:aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC»
+  [202] Исследователь кодов:
+  [203] Просмотреть в Исследователе кодов «aacid:aacid__isbngrp_records__20240920T194930Z__BqVZaTy3vWtcWpp6tBjwyC»
+  [204] AacId:
+  [205] копировать
+  [206] скопировано!
+  [207] aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX
+  [208] Anna’s Archive Container identifier.
+  [209] URL:
+  [210] /db/aac_record/aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX.json.html
+  [211] Веб-сайт:
+  [212] /blog/annas-archive-containers.html
+  [213] АА:
+  [214] Поиск в Архиве Анны по «aacid:aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX»
+  [215] Исследователь кодов:
+  [216] Просмотреть в Исследователе кодов «aacid:aacid__nexusstc_records__20240516T162751Z__6garikWAqJBAe6VoACiUZX»
+  [217] AacId:
+  [218] копировать
+  [219] скопировано!
+  [220] aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X
+  [221] Anna’s Archive Container identifier.
+  [222] URL:
+  [223] /db/aac_record/aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X.json.html
+  [224] Веб-сайт:
+  [225] /blog/annas-archive-containers.html
+  [226] АА:
+  [227] Поиск в Архиве Анны по «aacid:aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X»
+  [228] Исследователь кодов:
+  [229] Просмотреть в Исследователе кодов «aacid:aacid__rgb_records__20240919T161201Z__kKkink3M27xw6KARMkAp6X»
+  [230] AacId:
+  [231] копировать
+  [232] скопировано!
+  [233] aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn
+  [234] Anna’s Archive Container identifier.
+  [235] URL:
+  [236] /db/aac_record/aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn.json.html
+  [237] Веб-сайт:
+  [238] /blog/annas-archive-containers.html
+  [239] АА:
+  [240] Поиск в Архиве Анны по «aacid:aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn»
+  [241] Исследователь кодов:
+  [242] Просмотреть в Исследователе кодов «aacid:aacid__zlib3_records__20240809T215919Z__2750334__fRavGtdXAsvgZKu54SoiUn»
+  [243] AA Record ID:
+  [244] копировать
+  [245] скопировано!
+  [246] md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [247] Anna’s Archive record ID.
+  [248] АА:
+  [249] Поиск в Архиве Анны по «aarecord_id:md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [250] Исследователь кодов:
+  [251] Просмотреть в Исследователе кодов «aarecord_id:md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [252] Collection:
+  [253] копировать
+  [254] скопировано!
+  [255] lgli
+  [256] The collection on Anna’s Archive that provided data for this record.
+  [257] URL:
+  [258] /datasets/lgli
+  [259] Веб-сайт:
+  [260] /datasets
+  [261] АА:
+  [262] Поиск в Архиве Анны по «collection:lgli»
+  [263] Исследователь кодов:
+  [264] Просмотреть в Исследователе кодов «collection:lgli»
+  [265] Collection:
+  [266] копировать
+  [267] скопировано!
+  [268] lgrs
+  [269] The collection on Anna’s Archive that provided data for this record.
+  [270] URL:
+  [271] /datasets/lgrs
+  [272] Веб-сайт:
+  [273] /datasets
+  [274] АА:
+  [275] Поиск в Архиве Анны по «collection:lgrs»
+  [276] Исследователь кодов:
+  [277] Просмотреть в Исследователе кодов «collection:lgrs»
+  [278] Collection:
+  [279] копировать
+  [280] скопировано!
+  [281] nexusstc
+  [282] The collection on Anna’s Archive that provided data for this record.
+  [283] URL:
+  [284] /datasets/nexusstc
+  [285] Веб-сайт:
+  [286] /datasets
+  [287] АА:
+  [288] Поиск в Архиве Анны по «collection:nexusstc»
+  [289] Исследователь кодов:
+  [290] Просмотреть в Исследователе кодов «collection:nexusstc»
+  [291] Collection:
+  [292] копировать
+  [293] скопировано!
+  [294] zlib
+  [295] The collection on Anna’s Archive that provided data for this record.
+  [296] URL:
+  [297] /datasets/zlib
+  [298] Веб-сайт:
+  [299] /datasets
+  [300] АА:
+  [301] Поиск в Архиве Анны по «collection:zlib»
+  [302] Исследователь кодов:
+  [303] Просмотреть в Исследователе кодов «collection:zlib»
+  [304] Content Type:
+  [305] копировать
+  [306] скопировано!
+  [307] book_nonfiction
+  [308] Content type, determined by Anna’s Archive.
+  [309] АА:
+  [310] Поиск в Архиве Анны по «content_type:book_nonfiction»
+  [311] Исследователь кодов:
+  [312] Просмотреть в Исследователе кодов «content_type:book_nonfiction»
+  [313] SHA-256:
+  [314] копировать
+  [315] скопировано!
+  [316] 537beffa
+  [317] Веб-сайт:
+  [318] https://en.wikipedia.org/wiki/CRC32
+  [319] АА:
+  [320] Поиск в Архиве Анны по «crc32:537beffa»
+  [321] Исследователь кодов:
+  [322] Просмотреть в Исследователе кодов «crc32:537beffa»
+  [323] ISBN GRP Source Scrape Date:
+  [324] копировать
+  [325] скопировано!
+  [326] 2024-09-20
+  [327] Date Anna’s Archive scraped the ISBN GRP collection.
+  [328] Веб-сайт:
+  [329] /datasets/isbngrp
+  [330] АА:
+  [331] Поиск в Архиве Анны по «date_isbngrp_meta_scrape:2024-09-20»
+  [332] Исследователь кодов:
+  [333] Просмотреть в Исследователе кодов «date_isbngrp_meta_scrape:2024-09-20»
+  [334] Libgen.li Source Date:
+  [335] копировать
+  [336] скопировано!
+  [337] 2016-08-14
+  [338] Date Libgen.li published this file.
+  [339] Веб-сайт:
+  [340] /datasets/lgli
+  [341] АА:
+  [342] Поиск в Архиве Анны по «date_lgli_source:2016-08-14»
+  [343] Исследователь кодов:
+  [344] Просмотреть в Исследователе кодов «date_lgli_source:2016-08-14»
+  [345] Libgen.rs Non-Fiction Date:
+  [346] копировать
+  [347] скопировано!
+  [348] 2016-08-14
+  [349] Date Libgen.rs Non_Fiction published this file.
+  [350] Веб-сайт:
+  [351] /datasets/lgrs
+  [352] АА:
+  [353] Поиск в Архиве Анны по «date_lgrsnf_source:2016-08-14»
+  [354] Исследователь кодов:
+  [355] Просмотреть в Исследователе кодов «date_lgrsnf_source:2016-08-14»
+  [356] Nexus/STC Source issued_at Date:
+  [357] копировать
+  [358] скопировано!
+  [359] 1995-01-01
+  [360] Date Nexus/STC reports in their issued_at field, which is the “issuing time of the item described by record.”
+  [361] Веб-сайт:
+  [362] /datasets/nexusstc
+  [363] АА:
+  [364] Поиск в Архиве Анны по «date_nexusstc_source_issued_at:1995-01-01»
+  [365] Исследователь кодов:
+  [366] Просмотреть в Исследователе кодов «date_nexusstc_source_issued_at:1995-01-01»
+  [367] Nexus/STC Source Updated Date:
+  [368] копировать
+  [369] скопировано!
+  [370] 2024-05-16
+  [371] Date Nexus/STC last updated this record.
+  [372] Веб-сайт:
+  [373] /datasets/nexusstc
+  [374] АА:
+  [375] Поиск в Архиве Анны по «date_nexusstc_source_update:2024-05-16»
+  [376] Исследователь кодов:
+  [377] Просмотреть в Исследователе кодов «date_nexusstc_source_update:2024-05-16»
+  [378] Russian State Library Source Scrape Date:
+  [379] копировать
+  [380] скопировано!
+  [381] 2024-09-19
+  [382] Date Anna’s Archive scraped the Russian State Library collection.
+  [383] Веб-сайт:
+  [384] /datasets/rgb
+  [385] АА:
+  [386] Поиск в Архиве Анны по «date_rgb_meta_scrape:2024-09-19»
+  [387] Исследователь кодов:
+  [388] Просмотреть в Исследователе кодов «date_rgb_meta_scrape:2024-09-19»
+  [389] Z-Library Source Date:
+  [390] копировать
+  [391] скопировано!
+  [392] 2019-04-09
+  [393] Date Z-Library published this file.
+  [394] Веб-сайт:
+  [395] /datasets/zlib
+  [396] АА:
+  [397] Поиск в Архиве Анны по «date_zlib_source:2019-04-09»
+  [398] Исследователь кодов:
+  [399] Просмотреть в Исследователе кодов «date_zlib_source:2019-04-09»
+  [400] Filepath:
+  [401] копировать
+  [402] скопировано!
+  [403] lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [404] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [405] АА:
+  [406] Поиск в Архиве Анны по «filepath:lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [407] Исследователь кодов:
+  [408] Просмотреть в Исследователе кодов «filepath:lgli/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [409] Filepath:
+  [410] копировать
+  [411] скопировано!
+  [412] lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf
+  [413] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [414] АА:
+  [415] Поиск в Архиве Анны по «filepath:lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [416] Исследователь кодов:
+  [417] Просмотреть в Исследователе кодов «filepath:lgrsnf/А. И. Сонин;Анекдоты. Милицейские будни;;;Лана;   1995;5-88331-104-0;;Russian.pdf»
+  [418] Filepath:
+  [419] копировать
+  [420] скопировано!
+  [421] nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf
+  [422] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [423] АА:
+  [424] Поиск в Архиве Анны по «filepath:nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf»
+  [425] Исследователь кодов:
+  [426] Просмотреть в Исследователе кодов «filepath:nexusstc/Анекдоты. Милицейские будни/335f7a2d1aa3b4fcc8a4fabb80ac0bbe.pdf»
+  [427] Filepath:
+  [428] копировать
+  [429] скопировано!
+  [430] zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf
+  [431] Browse collections using their original file paths (particularly 'upload' is interesting)
+  [432] АА:
+  [433] Поиск в Архиве Анны по «filepath:zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf»
+  [434] Исследователь кодов:
+  [435] Просмотреть в Исследователе кодов «filepath:zlib/Fiction/Others/А. И. Сонин/Анекдоты. Милицейские будни_2750334.pdf»
+  [436] Filesize:
+  [437] копировать
+  [438] скопировано!
+  [439] 7785101
+  [440] Filesize in bytes.
+  [441] АА:
+  [442] Поиск в Архиве Анны по «filesize_bytes:7785101»
+  [443] Исследователь кодов:
+  [444] Просмотреть в Исследователе кодов «filesize_bytes:7785101»
+  [445] IPFS CID:
+  [446] копировать
+  [447] скопировано!
+  [448] QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1
+  [449] Content Identifier (CID) of the InterPlanetary File System (IPFS).
+  [450] URL:
+  [451] ipfs://QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1
+  [452] Веб-сайт:
+  [453] https://ipfs.tech/
+  [454] АА:
+  [455] Поиск в Архиве Анны по «ipfs_cid:QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1»
+  [456] Исследователь кодов:
+  [457] Просмотреть в Исследователе кодов «ipfs_cid:QmXy9BnBcQMiiF1qydUzaoRiAKjwLd7KQGKhVxXSty1db1»
+  [458] IPFS CID:
+  [459] копировать
+  [460] скопировано!
+  [461] bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc
+  [462] Content Identifier (CID) of the InterPlanetary File System (IPFS).
+  [463] URL:
+  [464] ipfs://bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc
+  [465] Веб-сайт:
+  [466] https://ipfs.tech/
+  [467] АА:
+  [468] Поиск в Архиве Анны по «ipfs_cid:bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc»
+  [469] Исследователь кодов:
+  [470] Просмотреть в Исследователе кодов «ipfs_cid:bafykbzaceacwvwbqoonscmc36xodnjxylnxw5h5e5wu6tpal4yhx6lje777wc»
+  [471] IPFS CID:
+  [472] копировать
+  [473] скопировано!
+  [474] bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk
+  [475] Content Identifier (CID) of the InterPlanetary File System (IPFS).
+  [476] URL:
+  [477] ipfs://bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk
+  [478] Веб-сайт:
+  [479] https://ipfs.tech/
+  [480] АА:
+  [481] Поиск в Архиве Анны по «ipfs_cid:bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk»
+  [482] Исследователь кодов:
+  [483] Просмотреть в Исследователе кодов «ipfs_cid:bafykbzacebtxboarggews23bvbuygcxutg4umytt2ykqcxkgblwwd4ndv4slk»
+  [484] ISBN GRP ID:
+  [485] копировать
+  [486] скопировано!
+  [487] db607448228904f44db10f2b35ba76b5
+  [488] ISBN GRP ID.
+  [489] URL:
+  [490] /isbngrp/db607448228904f44db10f2b35ba76b5
+  [491] Веб-сайт:
+  [492] /datasets/isbngrp
+  [493] АА:
+  [494] Поиск в Архиве Анны по «isbngrp:db607448228904f44db10f2b35ba76b5»
+  [495] Исследователь кодов:
+  [496] Просмотреть в Исследователе кодов «isbngrp:db607448228904f44db10f2b35ba76b5»
+  [497] Language:
+  [498] копировать
+  [499] скопировано!
+  [500] ru
+  [501] IETF language tag.
+  [502] Веб-сайт:
+  [503] https://en.wikipedia.org/wiki/IETF_language_tag
+  [504] АА:
+  [505] Поиск в Архиве Анны по «lang:ru»
+  [506] Исследователь кодов:
+  [507] Просмотреть в Исследователе кодов «lang:ru»
+  [508] Libgen.li File:
+  [509] копировать
+  [510] скопировано!
+  [511] 92569440
+  [512] Global file ID in Libgen.li. Directly taken from the 'f_id' field in the 'files' table.
+  [513] URL:
+  [514] https://libgen.li/file.php?id=92569440
+  [515] Веб-сайт:
+  [516] /datasets/lgli
+  [517] АА:
+  [518] Поиск в Архиве Анны по «lgli:92569440»
+  [519] Исследователь кодов:
+  [520] Просмотреть в Исследователе кодов «lgli:92569440»
+  [521] Libgen.li libgen_id:
+  [522] копировать
+  [523] скопировано!
+  [524] 1541645
+  [525] Repository ID for the 'libgen' repository in Libgen.li. Directly taken from the 'libgen_id' field in the 'files' table. Corresponds to the 'thousands folder' torrents.
+  [526] Веб-сайт:
+  [527] /datasets/lgli
+  [528] АА:
+  [529] Поиск в Архиве Анны по «lgli_libgen_id:1541645»
+  [530] Исследователь кодов:
+  [531] Просмотреть в Исследователе кодов «lgli_libgen_id:1541645»
+  [532] Libgen.rs Non-Fiction:
+  [533] копировать
+  [534] скопировано!
+  [535] 1541645
+  [536] Repository ID for the non-fiction ('libgen') repository in Libgen.rs. Directly taken from the 'id' field in the 'updated' table. Corresponds to the 'thousands folder' torrents.
+  [537] URL:
+  [538] https://libgen.is/json.php?fields=*&ids=1541645
+  [539] Веб-сайт:
+  [540] /datasets/lgrs
+  [541] АА:
+  [542] Поиск в Архиве Анны по «lgrsnf:1541645»
+  [543] Исследователь кодов:
+  [544] Просмотреть в Исследователе кодов «lgrsnf:1541645»
+  [545] Libgen.rs Non-Fiction Topic:
+  [546] копировать
+  [547] скопировано!
+  [548] literature\\prose
+  [549] Libgen’s own classification system of 'topics' for non-fiction books. Obtained from the 'topic' metadata field, using the 'topics' database table, which seems to have its roots in the Kolxo3 library t
+  [550] Веб-сайт:
+  [551] /datasets/lgrs
+  [552] АА:
+  [553] Поиск в Архиве Анны по «lgrsnf_topic:literature\\prose»
+  [554] Исследователь кодов:
+  [555] Просмотреть в Исследователе кодов «lgrsnf_topic:literature\\prose»
+  [556] MD5:
+  [557] копировать
+  [558] скопировано!
+  [559] 335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [560] Веб-сайт:
+  [561] https://en.wikipedia.org/wiki/MD5
+  [562] АА:
+  [563] Поиск в Архиве Анны по «md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [564] Исследователь кодов:
+  [565] Просмотреть в Исследователе кодов «md5:335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [566] Nexus/STC:
+  [567] копировать
+  [568] скопировано!
+  [569] 6sow91mca7rcrlk4mo4ne48ps
+  [570] ID of an individual edition of a file in Nexus/STC.
+  [571] URL:
+  [572] https://libstc.cc/#/stc/nid:6sow91mca7rcrlk4mo4ne48ps
+  [573] Веб-сайт:
+  [574] /datasets/nexusstc
+  [575] АА:
+  [576] Поиск в Архиве Анны по «nexusstc:6sow91mca7rcrlk4mo4ne48ps»
+  [577] Исследователь кодов:
+  [578] Просмотреть в Исследователе кодов «nexusstc:6sow91mca7rcrlk4mo4ne48ps»
+  [579] Nexus/STC Tag:
+  [580] копировать
+  [581] скопировано!
+  [582] Анекдоты
+  [583] Tag in Nexus/STC.
+  [584] Веб-сайт:
+  [585] /datasets/nexusstc
+  [586] АА:
+  [587] Поиск в Архиве Анны по «nexusstc_tag:Анекдоты»
+  [588] Исследователь кодов:
+  [589] Просмотреть в Исследователе кодов «nexusstc_tag:Анекдоты»
+  [590] Nexus/STC Tag:
+  [591] копировать
+  [592] скопировано!
+  [593] Библиотека
+  [594] Tag in Nexus/STC.
+  [595] Веб-сайт:
+  [596] /datasets/nexusstc
+  [597] АА:
+  [598] Поиск в Архиве Анны по «nexusstc_tag:Библиотека»
+  [599] Исследователь кодов:
+  [600] Просмотреть в Исследователе кодов «nexusstc_tag:Библиотека»
+  [601] Nexus/STC Tag:
+  [602] копировать
+  [603] скопировано!
+  [604] Юмор и сатира
+  [605] Tag in Nexus/STC.
+  [606] Веб-сайт:
+  [607] /datasets/nexusstc
+  [608] АА:
+  [609] Поиск в Архиве Анны по «nexusstc_tag:Юмор и сатира»
+  [610] Исследователь кодов:
+  [611] Просмотреть в Исследователе кодов «nexusstc_tag:Юмор и сатира»
+  [612] Russian State Library ID:
+  [613] копировать
+  [614] скопировано!
+  [615] 001724694
+  [616] Russian State Library ID.
+  [617] URL:
+  [618] /rgb/001724694
+  [619] Веб-сайт:
+  [620] /datasets/rgb
+  [621] АА:
+  [622] Поиск в Архиве Анны по «rgb:001724694»
+  [623] Исследователь кодов:
+  [624] Просмотреть в Исследователе кодов «rgb:001724694»
+  [625] Russian State Library ID:
+  [626] копировать
+  [627] скопировано!
+  [628] 1724694
+  [629] Russian State Library ID.
+  [630] URL:
+  [631] /rgb/1724694
+  [632] Веб-сайт:
+  [633] /datasets/rgb
+  [634] АА:
+  [635] Поиск в Архиве Анны по «rgb:1724694»
+  [636] Исследователь кодов:
+  [637] Просмотреть в Исследователе кодов «rgb:1724694»
+  [638] Server Path:
+  [639] копировать
+  [640] скопировано!
+  [641] g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe
+  [642] Path on Anna’s Archive partner servers.
+  [643] АА:
+  [644] Поиск в Архиве Анны по «server_path:g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [645] Исследователь кодов:
+  [646] Просмотреть в Исследователе кодов «server_path:g4/libgenrs_nonfiction/libgenrs_nonfiction/1541000/335f7a2d1aa3b4fcc8a4fabb80ac0bbe»
+  [647] SHA-1:
+  [648] копировать
+  [649] скопировано!
+  [650] mbhgv7utsudvjgsev76ilsh4um2pfwa2
+  [651] Веб-сайт:
+  [652] https://en.wikipedia.org/wiki/SHA-1
+  [653] АА:
+  [654] Поиск в Архиве Анны по «sha1:mbhgv7utsudvjgsev76ilsh4um2pfwa2»
+  [655] Исследователь кодов:
+  [656] Просмотреть в Исследователе кодов «sha1:mbhgv7utsudvjgsev76ilsh4um2pfwa2»
+  [657] SHA-256:
+  [658] копировать
+  [659] скопировано!
+  [660] e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3
+  [661] Веб-сайт:
+  [662] https://en.wikipedia.org/wiki/SHA-2
+  [663] АА:
+  [664] Поиск в Архиве Анны по «sha256:e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3»
+  [665] Исследователь кодов:
+  [666] Просмотреть в Исследователе кодов «sha256:e9d111d24a2aa2da6cdf1a1c331ee8a9d5644e2036045e2da26af026b16074d3»
+  [667] Torrent:
+  [668] копировать
+  [669] скопировано!
+  [670] external/libgen_rs_non_fic/r_1541000.torrent
+  [671] Bulk torrent for long-term preservation.
+  [672] URL:
+  [673] /dyn/small_file/torrents/external/libgen_rs_non_fic/r_1541000.torrent
+  [674] Веб-сайт:
+  [675] /torrents
+  [676] АА:
+  [677] Поиск в Архиве Анны по «torrent:external/libgen_rs_non_fic/r_1541000.torrent»
+  [678] Исследователь кодов:
+  [679] Просмотреть в Исследователе кодов «torrent:external/libgen_rs_non_fic/r_1541000.torrent»
+  [680] Year:
+  [681] копировать
+  [682] скопировано!
+  [683] 1995
+  [684] Publication year.
+  [685] АА:
+  [686] Поиск в Архиве Анны по «year:1995»
+  [687] Исследователь кодов:
+  [688] Просмотреть в Исследователе кодов «year:1995»
+  [689] Z-Library:
+  [690] копировать
+  [691] скопировано!
+  [692] 2750334
+  [693] ID in Z-Library.
+  [694] URL:
+  [695] https://z-lib.gd/
+  [696] Веб-сайт:
+  [697] /datasets/zlib
+  [698] АА:
+  [699] Поиск в Архиве Анны по «zlib:2750334»
+  [700] Исследователь кодов:
+  [701] Просмотреть в Исследователе кодов «zlib:2750334»
+  [702] Zlib Category ID:
+  [703] копировать
+  [704] скопировано!
+  [705] 770
+  [706] Category ID on the Z-Library website.
+  [707] URL:
+  [708] https://z-lib.gd/category/770
+  [709] Веб-сайт:
+  [710] https://z-lib.gs/categories
+  [711] АА:
+  [712] Поиск в Архиве Анны по «zlib_category_id:770»
+  [713] Исследователь кодов:
+  [714] Просмотреть в Исследователе кодов «zlib_category_id:770»
+  [715] Zlib Category Name:
+  [716] копировать
+  [717] скопировано!
+  [718] Fiction/Others
+  [719] Name for the zlib_category_id (category ID on the Z-Library website).
+  [720] Веб-сайт:
+  [721] https://z-lib.gs/categories
+  [722] АА:
+  [723] Поиск в Архиве Анны по «zlib_category_name:Fiction/Others»
+  [724] Исследователь кодов:
+  [725] Просмотреть в Исследователе кодов «zlib_category_name:Fiction/Others»
+  [726] Подробнее…
