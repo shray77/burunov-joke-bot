@@ -21,6 +21,8 @@ venv/
 .venv/
 env/
 .env
+.env.*
+!.env.example
 ENV/
 *.egg-info/
 .pytest_cache/
@@ -31,12 +33,24 @@ ENV/
 *.swp
 *.swo
 .DS_Store
+Thumbs.db
 
 # Логи
 *.log
 logs/
+scripts/scraper.log
 
 # Секреты — НИКОГДА не коммитить
 secrets/
 *.token
 credentials.json
+
+# Skills system (private)
+skills/
+
+# Node
+node_modules/
+
+# Тестовые дампы скрапера
+scripts/_*.html
+scripts/_*.py
