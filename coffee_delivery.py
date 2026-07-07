@@ -1,36 +1,20 @@
 """
-coffee_delivery.py v2 — оркестрация сценария "Принеси кофе".
+coffee_delivery.py v3 — оркестрация сценария "Принеси кофе".
 
-Связывает:
-  - Lidar (lidar_obstacle.ObstacleMonitor) — безопасность движения
-  - Vision (yolo_coffee.CoffeeVision) — поиск чашки кофе
-  - Hand (force_sensor.GripController) — захват с контролем силы
-  - LocoClient (unitree_sdk2) — движение
-  - AudioClient (unitree_sdk2) — голос + LED
-  - RAG/TTS — HTTP к localhost:8000 (RAG) и localhost:8001 (TTS)
+ОБНОВЛЕНО под реальные импорты из unitree_docs/ и существующего unitree_hands.py.
 
-Сценарий:
-  1. Голос Бурунова: "Угу, щас, Олег Тарасыч..."
-  2. LED: синий → зелёный
-  3. Move(vx=0.25) вперёд, пока YOLO не найдёт чашку или не упрётся в препятствие
-  4. Подъехать к чашке по approach_cmd (vx/vyaw коррекция)
-  5. На расстоянии ~0.3м — стоп, захват
-  6. GripController.close_hand_safe(target=бумажный стакан)
-  7. Если не взял — голос + return
-  8. Разворот 180° (vyaw=0.5, 3.5 сек)
-  9. Move обратно (vx=0.25, 3 сек)
- 10. Hand open — поставить
- 11. Голос: "Вот ваш кофе, Олег. Не обожгись, бля."
- 12. Squat → StandUp
- 13. LED off
+Импорты:
+  - LocoClient: from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
+      Методы: Start, Damp, Squat, Sit, StandUp, Move(vx,vy,vyaw), StopMove,
+              BalanceStand, ContinuousGait, SetVelocity
+  - AudioClient: from unitree_sdk2py.g1.audio.g1_audio_client import AudioClient
+      Методы: TtsMaker(text, speaker_id), SetVolume(volume),
+              LedControl(R,G,B), PlayStream(app_name, stream_id, pcm_data),
+              PlayStop(app_name)
+  - HandClient: from unitree_sdk2py.g1.hand.hand_client import HandClient
+      (используется через force_sensor.GripController)
 
-Поднимается как FastAPI на :8002:
-  POST /coffee {"recipient": "Олег"} → запускает deliver_coffee()
-  POST /stop — аварийная остановка
-  GET  /health — статус подсистем
-
-Запуск:
-  python3 coffee_delivery.py --port 8002
+PlayStream PCM формат: 16kHz, mono, 16-bit, без заголовка.
 """
 from __future__ import annotations
 
@@ -39,14 +23,11 @@ import sys
 import time
 import json
 import logging
-import asyncio
 import threading
-from dataclasses import dataclass
 from typing import Optional
 
 import requests
 
-# Локальные модули — предполагаем что рядом в той же директории
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lidar_obstacle import LidarSource, ObstacleMonitor, ObstacleState
 from yolo_coffee import CoffeeVision, CupDetection
@@ -57,41 +38,39 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 
 
 # -----------------------------------------------------------------------------
-# Конфигурация (мини config.py — если есть config.py, можно убрать)
+# Конфигурация
 # -----------------------------------------------------------------------------
-RAG_URL     = os.environ.get("RAG_URL", "http://127.0.0.1:8000")
-TTS_URL     = os.environ.get("TTS_URL", "http://127.0.0.1:8001")
+RAG_URL      = os.environ.get("RAG_URL", "http://127.0.0.1:8000")
+TTS_URL      = os.environ.get("TTS_URL", "http://127.0.0.1:8001")
 G1_INTERFACE = os.environ.get("G1_INTERFACE", "eth0")
 
-# Скорости движения (безопасные для демо)
-VX_FORWARD   = 0.25   # м/с вперёд
-VX_BACKWARD  = 0.15   # м/с назад
-VYAW_TURN    = 0.5    # рад/с поворот
-TIMEOUT_FIND_CUP_S   = 30.0   # максимум времени на поиск чашки
-TIMEOUT_APPROACH_S   = 15.0   # максимум на подъезд к чашке
-TIMEOUT_RETURN_S     = 20.0   # максимум на возврат
+VX_FORWARD   = 0.25
+VX_BACKWARD  = 0.15
+VYAW_TURN    = 0.5
+TIMEOUT_FIND_CUP_S   = 30.0
+TIMEOUT_APPROACH_S   = 15.0
+TIMEOUT_RETURN_S     = 20.0
 
-# LED цвета (RGB 0-255)
+# LED цвета
 LED_OFF     = (0, 0, 0)
-LED_THINK   = (0, 0, 255)       # синий — думает
-LED_GO      = (0, 255, 0)       # зелёный — идёт
-LED_WARN    = (255, 255, 0)     # жёлтый — осторожно
-LED_ERROR   = (255, 0, 0)       # красный — ошибка
-LED_GRIPPED = (255, 0, 255)     # пурпурный — взял
+LED_THINK   = (0, 0, 255)
+LED_GO      = (0, 255, 0)
+LED_WARN    = (255, 255, 0)
+LED_ERROR   = (255, 0, 0)
+LED_GRIPPED = (255, 0, 255)
+
+# Имя приложения для PlayStream (для управления состоянием воспроизведения)
+AUDIO_APP_NAME = "burunov_bot"
+AUDIO_STREAM_ID = "burunov_default"
 
 
 # -----------------------------------------------------------------------------
-# Обёртки над unitree_sdk2 (LocoClient + AudioClient) — TODO_SDK
+# G1Mover — обёртка над LocoClient (РЕАЛЬНЫЕ ИМПОРТЫ)
 # -----------------------------------------------------------------------------
 class G1Mover:
     """
     Движение G1 через LocoClient из Sport Services.
-
-    TODO_SDK: проверить импорт под G1 EDU Ultimate. Возможные варианты:
-      from unitree_sdk2py.g1.loco.g1_loco_client import G1LocoClient
-      from unitree_sdk2py.go2.sport.sport_client import SportClient
-
-    Свериться с unitree_docs/.
+    Сверено с unitree_docs/sport_services.json.
     """
 
     def __init__(self, interface: str = G1_INTERFACE):
@@ -101,83 +80,126 @@ class G1Mover:
 
     def init(self) -> bool:
         try:
-            # TODO_SDK: реальный импорт и инициализация
-            # from unitree_sdk2py.core.channel import ChannelFactoryInitialize
-            # from unitree_sdk2py.g1.loco.g1_loco_client import G1LocoClient
-            # ChannelFactoryInitialize(0, self.interface)
-            # self._client = G1LocoClient()
-            # self._client.Init()
-            # self._client.Start()  # вход в main operation control
-            log.warning("G1Mover.init() — STUB. Реальный LocoClient не подключён.")
-            self._initialised = False
+            from unitree_sdk2py.core.channel import ChannelFactory
+            ChannelFactory.Initialize(0, self.interface)
+
+            from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
+            self._client = LocoClient()
+            self._client.Init()
+            # Войти в main operation control
+            ret = self._client.Start()
+            if ret != 0:
+                log.error(f"LocoClient.Start() failed: {ret}")
+                return False
+            self._initialised = True
+            log.info("G1Mover инициализирован (LocoClient)")
+            return True
+        except ImportError as e:
+            log.error(f"LocoClient импорт недоступен: {e}")
+            log.error("Проверить что unitree_sdk2py установлен и G1 доступен по сети eth0")
             return False
         except Exception as e:
             log.error(f"G1Mover init failed: {e}")
             return False
 
     def stand_up(self) -> bool:
-        # TODO_SDK: return self._client.StandUp() == 0
-        log.info("STUB: stand_up()")
-        return True
+        if not self._initialised: return True
+        try:
+            return self._client.StandUp() == 0
+        except Exception as e:
+            log.warning(f"StandUp failed: {e}")
+            return False
 
     def sit(self) -> bool:
-        # TODO_SDK: return self._client.Sit() == 0
-        log.info("STUB: sit()")
-        return True
+        if not self._initialised: return True
+        try:
+            return self._client.Sit() == 0
+        except Exception as e:
+            log.warning(f"Sit failed: {e}")
+            return False
 
     def squat(self) -> bool:
-        # TODO_SDK: return self._client.Squat() == 0
-        log.info("STUB: squat()")
-        return True
+        if not self._initialised: return True
+        try:
+            return self._client.Squat() == 0
+        except Exception as e:
+            log.warning(f"Squat failed: {e}")
+            return False
 
     def balance_stand(self) -> bool:
-        # TODO_SDK: return self._client.BalanceStand() == 0
-        log.info("STUB: balance_stand()")
-        return True
+        if not self._initialised: return True
+        try:
+            return self._client.BalanceStand() == 0
+        except Exception as e:
+            log.warning(f"BalanceStand failed: {e}")
+            return False
 
-    def move(self, vx: float, vy: float, vyaw: float, duration_s: float, monitor: Optional[ObstacleMonitor] = None) -> bool:
+    def move(self, vx: float, vy: float, vyaw: float, duration_s: float,
+             monitor: Optional[ObstacleMonitor] = None) -> bool:
         """
         Двигаться duration_s секунд с заданными скоростями.
-        Если передан monitor — проверяет препятствия перед каждым шагом и стопает если STOP.
+        LocoClient.Move() по умолчанию действует 1 секунду, поэтому вызываем
+        его в цикле пока не пройдёт duration_s.
         """
         if not self._initialised:
             log.info(f"STUB: move(vx={vx}, vy={vy}, vyaw={vyaw}, {duration_s}s)")
             time.sleep(min(duration_s, 0.1))
             return True
 
-        steps = max(1, int(duration_s * 10))  # шаги по 0.1 сек
+        # Включаем continuous gait чтобы Move() действовал дольше 1 сек
+        try:
+            self._client.ContinuousGait(True)
+        except Exception:
+            pass
+
+        steps = max(1, int(duration_s * 10))
         dt = duration_s / steps
+        success = True
         for i in range(steps):
             if monitor is not None:
                 state = monitor.get_state()
                 if state.state == ObstacleState.STOP and vx > 0:
-                    # стопаем если едем вперёд и препятствие близко
-                    # TODO_SDK: self._client.StopMove()
+                    self._client.StopMove()
                     log.warning(f"Move прерван: препятствие {state.nearest_m:.2f}м")
-                    return False
-            # TODO_SDK: self._client.Move(vx, vy, vyaw)
+                    success = False
+                    break
+            try:
+                self._client.Move(vx, vy, vyaw)
+            except Exception as e:
+                log.warning(f"Move step failed: {e}")
             time.sleep(dt)
-        # TODO_SDK: self._client.StopMove()
-        return True
+
+        try:
+            self._client.StopMove()
+            self._client.ContinuousGait(False)
+        except Exception:
+            pass
+        return success
 
     def stop_move(self) -> bool:
-        # TODO_SDK: self._client.StopMove()
-        log.info("STUB: stop_move()")
-        return True
+        if not self._initialised: return True
+        try:
+            return self._client.StopMove() == 0
+        except Exception:
+            return False
 
     def damp(self) -> bool:
-        """Аварийный режим — обмякнуть (для безопасности)."""
-        # TODO_SDK: self._client.Damp()
-        log.warning("STUB: damp()")
-        return True
+        """Аварийный режим — обмякнуть."""
+        if not self._initialised: return True
+        try:
+            return self._client.Damp() == 0
+        except Exception as e:
+            log.warning(f"Damp failed: {e}")
+            return False
 
 
+# -----------------------------------------------------------------------------
+# G1Audio — обёртка над AudioClient (РЕАЛЬНЫЕ ИМПОРТЫ)
+# -----------------------------------------------------------------------------
 class G1Audio:
     """
-    Голос + LED через AudioClient (VuiClient).
-
-    TODO_SDK: проверить импорт. Обычно:
-      from unitree_sdk2py.go2.audio.audio_client import AudioClient
+    Голос + LED через AudioClient.
+    Сверено с unitree_docs/vuiclient.json.
     """
 
     def __init__(self, interface: str = G1_INTERFACE):
@@ -187,52 +209,97 @@ class G1Audio:
 
     def init(self) -> bool:
         try:
-            # TODO_SDK: реальный импорт
-            # from unitree_sdk2py.core.channel import ChannelFactoryInitialize
-            # from unitree_sdk2py.go2.audio.audio_client import AudioClient
-            # ChannelFactoryInitialize(0, self.interface)
-            # self._client = AudioClient()
-            # self._client.Init()
-            log.warning("G1Audio.init() — STUB.")
-            self._initialised = False
+            # ChannelFactory уже инициализирован в G1Mover.init() —
+            # но на всякий случай повторно вызываем (это безопасно)
+            from unitree_sdk2py.core.channel import ChannelFactory
+            ChannelFactory.Initialize(0, self.interface)
+
+            from unitree_sdk2py.g1.audio.g1_audio_client import AudioClient
+            self._client = AudioClient()
+            self._client.Init()
+            self._client.SetTimeout(10.0)
+            self._initialised = True
+            log.info("G1Audio инициализирован (AudioClient)")
+            return True
+        except ImportError as e:
+            log.error(f"AudioClient импорт недоступен: {e}")
             return False
         except Exception as e:
             log.error(f"G1Audio init failed: {e}")
             return False
 
-    def set_led(self, rgb: tuple[int, int, int]) -> bool:
+    def set_led(self, rgb: tuple) -> bool:
+        """LedControl(R, G, B). Интервал вызовов > 200мс по доке."""
+        if not self._initialised:
+            log.info(f"STUB LED ({rgb})")
+            return True
         r, g, b = rgb
-        # TODO_SDK: self._client.LedControl(r, g, b)
-        log.info(f"STUB: LED ({r},{g},{b})")
-        return True
+        try:
+            ret = self._client.LedControl(r, g, b)
+            return ret == 0
+        except Exception as e:
+            log.warning(f"LedControl failed: {e}")
+            return False
 
     def set_volume(self, vol: int) -> bool:
-        # TODO_SDK: self._client.SetVolume(vol)  # 0..100
-        log.info(f"STUB: volume={vol}")
-        return True
+        """SetVolume(0-100). По доке для Stanley рекомендуется 100."""
+        if not self._initialised: return True
+        try:
+            return self._client.SetVolume(vol) == 0
+        except Exception as e:
+            log.warning(f"SetVolume failed: {e}")
+            return False
 
     def play_pcm(self, pcm_bytes: bytes, sample_rate: int = 16000) -> bool:
         """
-        Проиграть PCM 16kHz mono 16-bit на динамик Stanley.
-        TODO_SDK: AudioClient.PlayStream(app_name, stream_id, pcm_data)
+        PlayStream(app_name, stream_id, pcm_data).
+        PCM: 16kHz, mono, 16-bit (без заголовка WAV).
         """
-        log.info(f"STUB: play_pcm {len(pcm_bytes)} bytes")
-        # Имитация длины воспроизведения (16kHz * 2 bytes/sample)
-        dur = len(pcm_bytes) / (sample_rate * 2)
-        time.sleep(min(dur, 0.1))
-        return True
+        if not self._initialised:
+            log.info(f"STUB play_pcm {len(pcm_bytes)} bytes")
+            dur = len(pcm_bytes) / (sample_rate * 2)
+            time.sleep(min(dur, 0.1))
+            return True
+        try:
+            # PCM должен быть list[uint8] или bytes — зависит от версии SDK
+            # В Python биндингах обычно принимает bytes или list[int]
+            pcm_list = list(pcm_bytes)
+            ret = self._client.PlayStream(AUDIO_APP_NAME, AUDIO_STREAM_ID, pcm_list)
+            if ret != 0:
+                log.error(f"PlayStream returned {ret}")
+                return False
+            # Ждём пока проиграется (оценка: 16kHz * 2 bytes/sample)
+            dur = len(pcm_bytes) / (sample_rate * 2)
+            time.sleep(dur + 0.1)
+            return True
+        except Exception as e:
+            log.error(f"play_pcm failed: {e}")
+            return False
+
+    def play_stop(self) -> bool:
+        if not self._initialised: return True
+        try:
+            return self._client.PlayStop(AUDIO_APP_NAME) == 0
+        except Exception:
+            return False
+
+    def tts_builtin(self, text: str, speaker_id: int = 0) -> bool:
+        """
+        Встроенный TTS робота (только CN/EN — НЕ используем для Бурунова).
+        Полезно для теста что динамик вообще работает.
+        """
+        if not self._initialised: return False
+        try:
+            return self._client.TtsMaker(text, speaker_id) == 0
+        except Exception as e:
+            log.warning(f"TtsMaker failed: {e}")
+            return False
 
 
 # -----------------------------------------------------------------------------
-# TTS / RAG клиенты (HTTP к локальным серверам)
+# TTS / RAG клиенты
 # -----------------------------------------------------------------------------
 def generate_burunov_phrase(topic_or_text: str, mode: str = "fixed") -> str:
-    """
-    Получить фразу голосом Бурунова (текст).
-    mode:
-      'fixed' — отдать как есть (для реплик типа "Угу, щас...")
-      'rag'   — пустить через RAG-пайплайн (для анекдотов)
-    """
     if mode == "fixed":
         return topic_or_text
     try:
@@ -245,10 +312,6 @@ def generate_burunov_phrase(topic_or_text: str, mode: str = "fixed") -> str:
 
 
 def synthesize_burunov_pcm(text: str) -> Optional[bytes]:
-    """
-    Синтезировать PCM 16kHz mono 16-bit голосом Бурунова.
-    Обращается к edge_tts_server.py или f5_tts_server.py на :8001.
-    """
     try:
         r = requests.post(f"{TTS_URL}/synthesize_pcm", json={"text": text}, timeout=30)
         r.raise_for_status()
@@ -258,24 +321,20 @@ def synthesize_burunov_pcm(text: str) -> Optional[bytes]:
         return None
 
 
-def speak(audio: G1Audio, text: str, led_during: tuple[int,int,int] = LED_GO) -> bool:
-    """Синтез + проигрывание на динамике G1."""
+def speak(audio: G1Audio, text: str, led_during: tuple = LED_GO) -> bool:
     audio.set_led(led_during)
     pcm = synthesize_burunov_pcm(text)
     if pcm is None:
         audio.set_led(LED_ERROR)
         log.error(f"TTS сломался на фразе: {text}")
         return False
-    audio.play_pcm(pcm)
-    return True
+    return audio.play_pcm(pcm)
 
 
 # -----------------------------------------------------------------------------
 # Оркестратор
 # -----------------------------------------------------------------------------
 class CoffeeDelivery:
-    """Главный класс сценария."""
-
     def __init__(self):
         self.mover = G1Mover()
         self.audio = G1Audio()
@@ -288,57 +347,43 @@ class CoffeeDelivery:
         self._busy = threading.Lock()
 
     def init_all(self) -> dict:
-        """Инициализация всех подсистем. Возвращает dict статусов."""
+        """Инициализация всех подсистем. ChannelFactory инициализируется ОДИН раз."""
+        # Сначала mover (он инициализирует ChannelFactory)
         m_ok = self.mover.init()
+        # Потом audio (ChannelFactory уже инициализирован, но в init вызываем ещё раз — безопасно)
         a_ok = self.audio.init()
-        l_ok = self.lidar.init()
-        v_ok = self.vision.init()
+        # Hand
         h_ok = self.hand.init()
-
+        # Lidar
+        l_ok = self.lidar.init()
         if l_ok:
             self.monitor.start_background()
+        # Vision
+        v_ok = self.vision.init()
 
-        # Громкость на максимум (дока G1 рекомендует 100 для Stanley)
         if a_ok:
             self.audio.set_volume(100)
-
-        # Встать если можем
         if m_ok:
             self.mover.stand_up()
 
         return {
-            "mover": m_ok,
-            "audio": a_ok,
-            "lidar": l_ok,
-            "vision": v_ok,
-            "hand": h_ok,
+            "mover": m_ok, "audio": a_ok, "lidar": l_ok,
+            "vision": v_ok, "hand": h_ok,
         }
 
     def abort(self):
-        """Аварийная остановка."""
         log.warning("ABORT requested")
         self._abort.set()
-        try:
-            self.mover.stop_move()
-        except Exception:
-            pass
-        try:
-            self.grip.release()
-        except Exception:
-            pass
-        try:
-            self.audio.set_led(LED_ERROR)
-        except Exception:
-            pass
+        try: self.mover.stop_move()
+        except: pass
+        try: self.grip.release()
+        except: pass
+        try: self.audio.set_led(LED_ERROR)
+        except: pass
 
     def deliver_coffee(self, recipient: str = "Олег") -> dict:
-        """
-        Основной сценарий. Запускается синхронно (можно в отдельном потоке).
-        Возвращает dict с результатом.
-        """
         if not self._busy.acquire(blocking=False):
             return {"ok": False, "error": "уже выполняется другая доставка"}
-
         self._abort.clear()
         result = {"ok": False, "stage": "init", "message": ""}
         try:
@@ -346,53 +391,39 @@ class CoffeeDelivery:
         except Exception as e:
             log.exception("deliver_coffee failed")
             result = {"ok": False, "stage": "exception", "message": str(e)}
-            try:
-                self.mover.damp()
-            except Exception:
-                pass
+            try: self.mover.damp()
+            except: pass
         finally:
             self._busy.release()
         return result
 
     def _run_scenario(self, recipient: str) -> dict:
-        # ----- 1. Голос: реплика Бурунова -----
+        # 1. Вступление Бурунова
         self.audio.set_led(LED_THINK)
         if not self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
-
-        # Префраз Бурунова (без RAG — это реплика, не анекдот)
         intro = f"Угу, щас, {recipient} Тарасыч... кофеварку найду..."
         speak(self.audio, intro, led_during=LED_THINK)
 
-        # ----- 2. LED зелёный, начинаем движение -----
+        # 2. LED зелёный, движение
         self.audio.set_led(LED_GO)
         self.mover.stand_up()
 
-        # ----- 3. Идём вперёд и ищем чашку через YOLO -----
+        # 3. Идём вперёд и ищем чашку
         log.info("Поиск чашки...")
         cup_found = False
         t_find_start = time.time()
-
         while time.time() - t_find_start < TIMEOUT_FIND_CUP_S:
             if self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
-
-            # Проверка препятствий
             obs = self.monitor.get_state()
             if obs.state == ObstacleState.STOP:
-                # Что-то прямо перед нами
                 self.mover.stop_move()
                 self.audio.set_led(LED_WARN)
                 speak(self.audio, "Бля, тут кто-то стоит... дай пройти.", led_during=LED_WARN)
-                # Подождать 2 сек — может уберут
                 if not self.monitor.wait_until_clear(timeout_s=5.0):
-                    # Не убрали — попробовать объехать (повернуть чуть)
                     self.mover.move(vx=0, vy=0, vyaw=VYAW_TURN, duration_s=1.5, monitor=self.monitor)
                 continue
-
-            # Один шаг вперёд
             self.mover.move(vx=VX_FORWARD, vy=0, vyaw=0, duration_s=0.5, monitor=self.monitor)
-
-            # Сканируем
-            det: CupDetection = self.vision.detect_once()
+            det = self.vision.detect_once()
             if det.detected and det.distance_m is not None:
                 log.info(f"Чашка найдена: {det.message}")
                 cup_found = True
@@ -401,77 +432,61 @@ class CoffeeDelivery:
         if not cup_found:
             speak(self.audio, f"Не вижу никакой чашки, {recipient}. Где кофе-то?", led_during=LED_ERROR)
             self.audio.set_led(LED_ERROR)
-            return {"ok": False, "stage": "find_cup", "message": "чашка не найдена за отведённое время"}
+            return {"ok": False, "stage": "find_cup", "message": "чашка не найдена"}
 
-        # ----- 4. Подъезжаем к чашке по approach_cmd -----
+        # 4. Подъезд к чашке
         log.info("Подъезд к чашке...")
         t_approach_start = time.time()
         approach_ok = False
-
         while time.time() - t_approach_start < TIMEOUT_APPROACH_S:
             if self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
-
             obs = self.monitor.get_state()
             if obs.state == ObstacleState.STOP and obs.nearest_m < 0.25:
-                # Уже очень близко к чему-то — стоп
                 self.mover.stop_move()
                 break
-
             det = self.vision.detect_once()
             if not det.detected or det.distance_m is None or det.approach_cmd is None:
-                # Потеряли чашку — чуть проехать вперёд и пересканировать
                 self.mover.move(vx=VX_FORWARD*0.5, vy=0, vyaw=0, duration_s=0.3, monitor=self.monitor)
                 continue
-
             cmd = det.approach_cmd
-            # Если в допуске — стоп, готовы хватать
             if cmd["vx"] == 0.0 and cmd["vyaw"] == 0.0:
                 self.mover.stop_move()
                 approach_ok = True
                 log.info(f"В позиции для захвата (dist={det.distance_m:.2f}м)")
                 break
-
-            # Иначе двигаемся по команде (короткий шаг 0.3 сек)
             self.mover.move(vx=cmd["vx"], vy=cmd["vy"], vyaw=cmd["vyaw"], duration_s=0.3, monitor=self.monitor)
 
         if not approach_ok:
             speak(self.audio, "Чё-то не подьезжается... ну ладно, попробую тут.", led_during=LED_WARN)
 
-        # ----- 5. Захват чашки -----
+        # 5. Захват
         log.info("Захват чашки...")
         self.audio.set_led(LED_THINK)
-
-        # Целевая сила — для бумажного стакана легче, для фарфора плотнее
-        # На демо по умолчанию берём лёгкий (бумага/картон). Если упругая — GripController сам усилит.
         grip_result = self.grip.close_hand_safe(
             target_force_g=FORCE_GRIP_LIGHT,
             max_force_g=FORCE_TOO_HARD,
             progress_cb=lambda r, i: log.debug(f"grip step {i}: {r.max_force_g:.1f}g"),
         )
-
         if not grip_result.success:
             self.audio.set_led(LED_ERROR)
-            speak(self.audio, f"Не могу взять, {recipient}. Руке не хватает чего-то... {grip_result.message}")
-            return {"ok": False, "stage": "grip", "message": grip_result.message, "grip": grip_result.__dict__}
+            speak(self.audio, f"Не могу взять, {recipient}. {grip_result.message}")
+            return {"ok": False, "stage": "grip", "message": grip_result.message}
 
         log.info(f"Захват успешен: {grip_result.message}")
         self.audio.set_led(LED_GRIPPED)
         speak(self.audio, "Взял. Сейчас принесу.", led_during=LED_GRIPPED)
 
-        # ----- 6. Разворот 180° -----
+        # 6. Разворот 180°
         log.info("Разворот...")
-        # Проверка что чашку всё ещё держим
         if not self.grip.check_grip_alive():
             speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
             return {"ok": False, "stage": "drop_during_turn", "message": "выронил при развороте"}
-
         self.mover.move(vx=0, vy=0, vyaw=VYAW_TURN, duration_s=3.5, monitor=self.monitor)
-
         if not self.grip.check_grip_alive():
             speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
             return {"ok": False, "stage": "drop_after_turn", "message": "выронил после разворота"}
 
-        # ----- 7. Возврат к Олегу -----
+        # 7. Возврат
         log.info("Возврат...")
         t_return_start = time.time()
         returned = False
@@ -480,45 +495,34 @@ class CoffeeDelivery:
             if not self.grip.check_grip_alive():
                 speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
                 return {"ok": False, "stage": "drop_during_return", "message": "выронил на обратном пути"}
-
             obs = self.monitor.get_state()
             if obs.state == ObstacleState.STOP:
                 self.mover.stop_move()
                 speak(self.audio, "Стою, кто-то на пути.", led_during=LED_WARN)
                 self.monitor.wait_until_clear(timeout_s=3.0)
                 continue
-
-            # Идём вперёд 0.5 сек, потом проверяем
             self.mover.move(vx=VX_FORWARD, vy=0, vyaw=0, duration_s=0.5, monitor=self.monitor)
-
-            # Простая эвристика остановки: прошли достаточно времени — стоп
             if time.time() - t_return_start > 3.0:
                 self.mover.stop_move()
                 returned = True
                 break
-
         if not returned:
             self.mover.stop_move()
 
-        # ----- 8. Поставить чашку -----
+        # 8. Поставить
         log.info("Постановка чашки...")
-        # Замерить силу до отпускания
         before_release = self.grip.hand.read_force().max_force_g
         self.grip.release()
         time.sleep(0.5)
         after_release = self.grip.hand.read_force().max_force_g
-
         if after_release > before_release * 0.7:
-            # Сила не упала — возможно чашка застряла в руке
             speak(self.audio, "Чё-то не отпускается...", led_during=LED_WARN)
-        else:
-            log.info("Чашка поставлена (сила упала после release)")
 
-        # ----- 9. Финальная фраза -----
+        # 9. Финальная фраза
         self.audio.set_led(LED_GO)
         speak(self.audio, f"Вот ваш кофе, {recipient}. Не обожгись, бля.", led_during=LED_GO)
 
-        # ----- 10. Squat от смеха -----
+        # 10. Squat
         try:
             self.mover.squat()
             time.sleep(0.5)
@@ -526,12 +530,11 @@ class CoffeeDelivery:
         except Exception as e:
             log.warning(f"squat failed: {e}")
 
-        # ----- 11. Завершение -----
+        # 11. Завершение
         self.audio.set_led(LED_OFF)
         return {"ok": True, "stage": "done", "message": f"кофе доставлен: {recipient}"}
 
     def _check_abort(self) -> bool:
-        """False если был запрос на abort."""
         if self._abort.is_set():
             log.warning("Abort detected — выходим из сценария")
             return False
@@ -545,12 +548,13 @@ def run_server(port: int = 8002):
     try:
         from fastapi import FastAPI, HTTPException
         from pydantic import BaseModel
+        from fastapi.responses import HTMLResponse
         import uvicorn
     except ImportError:
         log.error("pip install fastapi uvicorn pydantic")
         return
 
-    app = FastAPI(title="Burunov Coffee Delivery", version="2.0")
+    app = FastAPI(title="Burunov Coffee Delivery", version="3.0")
     delivery = CoffeeDelivery()
 
     class CoffeeRequest(BaseModel):
@@ -564,17 +568,16 @@ def run_server(port: int = 8002):
     @app.on_event("shutdown")
     def _shutdown():
         delivery.monitor.stop_background()
-        delivery.vision.stop()
+        try: delivery.vision.stop()
+        except: pass
 
     @app.post("/coffee")
     def coffee(req: CoffeeRequest):
-        # Запускаем в отдельном потоке чтобы не блокировать HTTP
         result_holder = {}
         def _run():
             result_holder["result"] = delivery.deliver_coffee(req.recipient)
         t = threading.Thread(target=_run, daemon=True)
         t.start()
-        # Возвращаем сразу — клиент может опрашивать /health
         return {"ok": True, "started": True, "recipient": req.recipient}
 
     @app.post("/stop")
@@ -596,14 +599,151 @@ def run_server(port: int = 8002):
 
     @app.post("/coffee_sync")
     def coffee_sync(req: CoffeeRequest):
-        """Синхронная версия — ждём окончания (для тестов)."""
         result = delivery.deliver_coffee(req.recipient)
         if not result.get("ok"):
             raise HTTPException(status_code=500, detail=result)
         return result
 
+    # Веб-интерфейс для управления с телефона
+    @app.get("/", response_class=HTMLResponse)
+    def web_ui():
+        return PHONE_UI_HTML
+
     log.info(f"Starting CoffeeDelivery server on :{port}")
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+
+# -----------------------------------------------------------------------------
+# Простой веб-интерфейс для телефона (HTML+JS, без зависимостей)
+# -----------------------------------------------------------------------------
+PHONE_UI_HTML = """<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Burunov Bot</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, system-ui, sans-serif; background: #1a1a1a; color: #fff;
+         min-height: 100vh; padding: 16px; }
+  h1 { text-align: center; margin: 16px 0; font-size: 22px; }
+  .status { background: #2a2a2a; padding: 12px; border-radius: 8px; margin-bottom: 16px;
+            font-family: monospace; font-size: 13px; line-height: 1.6; }
+  .status .ok { color: #4ade80; }
+  .status .err { color: #f87171; }
+  .status .warn { color: #facc15; }
+  button { width: 100%; padding: 16px; border: none; border-radius: 8px; font-size: 18px;
+           font-weight: bold; margin-bottom: 12px; cursor: pointer; }
+  .btn-coffee { background: #92400e; color: #fff; }
+  .btn-coffee:active { background: #78350f; }
+  .btn-joke { background: #1e40af; color: #fff; }
+  .btn-joke:active { background: #1e3a8a; }
+  .btn-stop { background: #dc2626; color: #fff; }
+  .btn-stop:active { background: #b91c1c; }
+  input { width: 100%; padding: 12px; border: 1px solid #444; border-radius: 8px;
+          background: #2a2a2a; color: #fff; font-size: 16px; margin-bottom: 12px; }
+  select { width: 100%; padding: 12px; border: 1px solid #444; border-radius: 8px;
+           background: #2a2a2a; color: #fff; font-size: 16px; margin-bottom: 12px; }
+  .log { background: #000; padding: 8px; border-radius: 8px; height: 200px; overflow-y: auto;
+         font-family: monospace; font-size: 12px; color: #4ade80; }
+</style>
+</head>
+<body>
+  <h1>🤖 Burunov Bot</h1>
+
+  <div class="status" id="status">Загрузка статуса...</div>
+
+  <input type="text" id="recipient" value="Олег" placeholder="Имя получателя">
+
+  <button class="btn-coffee" onclick="sendCoffee()">☕ Принеси кофе</button>
+
+  <select id="joke_topic">
+    <option value="Штирлиц">Штирлиц</option>
+    <option value="Вовочка">Вовочка</option>
+    <option value="Ржевский">Поручик Ржевский</option>
+    <option value="Новые русские">Новые русские</option>
+    <option value="Чапаев">Чапаев</option>
+  </select>
+  <button class="btn-joke" onclick="sendJoke()">🎭 Расскажи анекдот</button>
+
+  <button class="btn-stop" onclick="sendStop()">🛑 АВАРИЙНАЯ ОСТАНОВКА</button>
+
+  <div class="log" id="log"></div>
+
+<script>
+const ROBOT_IP = location.hostname;
+const API = `http://${ROBOT_IP}:8002`;
+const RAG = `http://${ROBOT_IP}:8000`;
+
+async function fetchStatus() {
+  try {
+    const r = await fetch(`${API}/health`);
+    const d = await r.json();
+    let html = '<b>Подсистемы:</b><br>';
+    html += `Mover: ${d.mover ? '<span class="ok">OK</span>' : '<span class="err">OFF</span>'}<br>`;
+    html += `Audio: ${d.audio ? '<span class="ok">OK</span>' : '<span class="err">OFF</span>'}<br>`;
+    html += `Lidar: ${d.lidar ? '<span class="ok">OK</span>' : '<span class="warn">OFF</span>'}<br>`;
+    html += `Vision: ${d.vision ? '<span class="ok">OK</span>' : '<span class="err">OFF</span>'}<br>`;
+    html += `Hand: ${d.hand ? '<span class="ok">OK</span>' : '<span class="err">OFF</span>'}<br>`;
+    html += `Busy: ${d.busy ? '<span class="warn">ЗАНЯТ</span>' : '<span class="ok">свободен</span>'}<br>`;
+    if (d.obstacle) {
+      html += `Obstacle: ${d.obstacle.state} (${d.obstacle.nearest_m?.toFixed(2)}м)<br>`;
+    }
+    document.getElementById('status').innerHTML = html;
+  } catch (e) {
+    document.getElementById('status').innerHTML = '<span class="err">Не достучаться до :8002</span>';
+  }
+}
+
+function log(msg) {
+  const el = document.getElementById('log');
+  const time = new Date().toLocaleTimeString();
+  el.innerHTML = `[${time}] ${msg}<br>` + el.innerHTML;
+}
+
+async function sendCoffee() {
+  const r = document.getElementById('recipient').value;
+  log(`☕ POST /coffee recipient=${r}`);
+  try {
+    const resp = await fetch(`${API}/coffee`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({recipient: r})
+    });
+    const d = await resp.json();
+    log(`→ ${JSON.stringify(d)}`);
+  } catch (e) { log(`ERR: ${e}`); }
+}
+
+async function sendJoke() {
+  const t = document.getElementById('joke_topic').value;
+  log(`🎭 POST /tell topic=${t}`);
+  try {
+    const resp = await fetch(`${RAG}/tell`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({topic: t})
+    });
+    const d = await resp.json();
+    log(`→ ${d.text?.substring(0, 100) || JSON.stringify(d)}`);
+  } catch (e) { log(`ERR: ${e} — RAG может быть не запущен`); }
+}
+
+async function sendStop() {
+  log('🛑 STOP');
+  if (!confirm('Аварийная остановка?')) return;
+  try {
+    await fetch(`${API}/stop`, {method: 'POST'});
+    log('→ STOPPED');
+  } catch (e) { log(`ERR: ${e}`); }
+}
+
+fetchStatus();
+setInterval(fetchStatus, 2000);
+</script>
+</body>
+</html>
+"""
 
 
 # -----------------------------------------------------------------------------
@@ -626,7 +766,8 @@ def main():
         result = delivery.deliver_coffee(args.recipient)
         print(json.dumps(result, indent=2, ensure_ascii=False, default=str))
         delivery.monitor.stop_background()
-        delivery.vision.stop()
+        try: delivery.vision.stop()
+        except: pass
 
 
 if __name__ == "__main__":
