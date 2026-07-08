@@ -10,18 +10,21 @@
 #   - НО обычный `pip install torch` с PyPI НЕ ВСТАНЕТ — там x86_64-сборки.
 #     Нужен ARM64-wheel от NVIDIA под конкретную версию JetPack.
 #
-# НЕ ПРОТЕСТИРОВАНО НА РЕАЛЬНОМ ЖЕЛЕЗЕ (SSH недоступен на момент
-# написания) — собран по официальной доке NVIDIA + тем же граблям,
-# что мы уже словили на Colab (COQUI_TOS_AGREED, диапазон transformers,
-# .to(device) вместо device= в конструкторе TTS()). Ожидай минимум одну
-# итерацию по факту первого реального прогона.
+# Работает под обычным пользователем (НЕ root) — все пути через $HOME,
+# apt через sudo. Проверено на реальном железе: L4T R35.3.1 (JetPack
+# 5.1.1), python3.8, CUDA 11.4 установлена, но системный torch 2.4.1
+# оказался CPU-only сборкой с PyPI (без суффикса +nv24.xx) — этот
+# скрипт ставит правильный CUDA-torch в отдельный venv, не трогая
+# системный python (там висит ROS2/YOLO26, не хотим ничего ломать).
 #
 # Запуск на самом G1 (после ssh):
 #   bash setup_xtts_jetson.sh
 # ─────────────────────────────────────────────────────────────────────
 set -e
-exec > >(tee -a /root/burunov_xtts_jetson_setup.log) 2>&1
-echo "=== Burunov XTTS Jetson setup started at $(date) ==="
+WORKDIR="$HOME/burunov-workspace"
+LOGFILE="$HOME/burunov_xtts_jetson_setup.log"
+exec > >(tee -a "$LOGFILE") 2>&1
+echo "=== Burunov XTTS Jetson setup started at $(date) (user: $(whoami), home: $HOME) ==="
 
 # ─── 0. Какой на самом деле JetPack/L4T ─────────────────────────────
 echo "=== JetPack / L4T версия ==="
@@ -40,23 +43,22 @@ echo "   и поправь TORCH_INDEX_JP ниже, если версия не v
 echo "   Wheel собран под конкретный python3.X (cp3X) — если у тебя не 3.8,"
 echo "   ищи соответствующий wheel в том же индексе, не ставь v51/cp38 вслепую."
 
-# ─── 1. Системные пакеты ─────────────────────────────────────────────
-apt-get update -y
-apt-get install -y \
+# ─── 1. Системные пакеты (через sudo — мы НЕ root) ───────────────────
+sudo apt-get update -y
+sudo apt-get install -y \
     python3-pip python3-venv \
     libopenblas-dev \
     git ffmpeg espeak-ng build-essential wget curl
 
-mkdir -p /root/burunov-workspace
-cd /root/burunov-workspace
+mkdir -p "$WORKDIR"
+cd "$WORKDIR"
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip wheel setuptools
 
 # ─── 2. PyTorch — ARM64 wheel от NVIDIA (НЕ с обычного PyPI) ─────────
 # Официальная дока: https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/
-# jp/v51 = JetPack 5.1.x. Если diag показал другую L4T-версию — поменяй путь
-# (посмотри https://developer.download.nvidia.com/compute/redist/jp/ на актуальные).
+# jp/v51 = JetPack 5.1.x, cu114 = CUDA 11.4 (подтверждено на этом железе).
 TORCH_INDEX_JP="v51"
 echo "=== Установка PyTorch (JetPack index: $TORCH_INDEX_JP) ==="
 pip install numpy=='1.26.1'
@@ -90,17 +92,20 @@ pip install soundfile
 
 # ─── 4. Смоук-тест: синтез на референсе Бурунова + замер RTF на Jetson ──
 echo "=== Смоук-тест XTTS на Jetson ==="
-git clone --depth 1 https://github.com/shray77/burunov-joke-bot.git /root/burunov-joke-bot-data 2>&1 | tail -3
-REF_WAV=$(find /root/burunov-joke-bot-data/data/preset_wav -maxdepth 1 -name "-*.wav" | head -1)
+DATA_DIR="$HOME/burunov-joke-bot-data"
+git clone --depth 1 https://github.com/shray77/burunov-joke-bot.git "$DATA_DIR" 2>&1 | tail -3
+REF_WAV=$(find "$DATA_DIR/data/preset_wav" -maxdepth 1 -name "-*.wav" | head -1)
 echo "Референс: $REF_WAV"
 
-python3 - <<'PYEOF'
+WORKDIR="$WORKDIR" DATA_DIR="$DATA_DIR" python3 - <<'PYEOF'
 import os, time, glob
 os.environ['COQUI_TOS_AGREED'] = '1'
 import torch
 from TTS.api import TTS
 
-ref = glob.glob('/root/burunov-joke-bot-data/data/preset_wav/-*.wav')[0]
+data_dir = os.environ['DATA_DIR']
+workdir = os.environ['WORKDIR']
+ref = glob.glob(f'{data_dir}/data/preset_wav/-*.wav')[0]
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'Device: {device}')
 
@@ -110,7 +115,7 @@ tts = TTS(model_name='tts_models/multilingual/multi-dataset/xtts_v2').to(device)
 print(f'Модель загружена за {time.time()-t0:.1f}с')
 
 text = 'Вот ваш кофе, Олег. Не обожгись, бля.'
-out = '/root/burunov-workspace/smoke_test.wav'
+out = f'{workdir}/smoke_test.wav'
 t0 = time.time()
 tts.tts_to_file(text=text, speaker_wav=ref, language='ru', file_path=out)
 synth_time = time.time() - t0
@@ -132,4 +137,4 @@ print(f'Файл сохранён: {out}')
 PYEOF
 
 echo ""
-echo "=== Готово. Проверь /root/burunov-workspace/smoke_test.wav и RTF выше ==="
+echo "=== Готово. Проверь $WORKDIR/smoke_test.wav и RTF выше ==="
