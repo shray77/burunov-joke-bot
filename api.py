@@ -82,9 +82,12 @@ def list_presets():
     """Список доступных пресетов (имя, текст, длительность)."""
     return {
         "presets": [
-            {"name": p.name, "text": p.text, "duration_s": p.duration_s}
+            {"name": p.name, "text": p.text, "duration_s": p.duration_s, "topic": p.topic}
             for p in preset_audio.list_presets()
         ],
+        # topics: тема -> список пресетов с готовым звуком (несколько = реальная
+        # вариативность, см. preset_audio.get_random_preset_for_topic).
+        "topics": preset_audio.topics_available(),
         "joke_topics": list(preset_audio.JOKE_TOPIC_PRESETS.keys()),
         "coffee_lines": preset_audio.COFFEE_PRESETS,
     }

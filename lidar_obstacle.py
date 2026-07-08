@@ -15,6 +15,8 @@ lidar_obstacle.py — простая логика "препятствие <0.4м
 """
 from __future__ import annotations
 
+import os
+import sys
 import time
 import math
 import threading
@@ -24,6 +26,8 @@ from enum import Enum
 from typing import Optional
 
 import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 log = logging.getLogger("lidar_obstacle")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -102,6 +106,108 @@ class LidarSource:
         """
         # TODO_SDK
         return None
+
+
+# -----------------------------------------------------------------------------
+# RealSenseObstacleSource — препятствия по глубине D435, вместо Livox
+# -----------------------------------------------------------------------------
+# На реальном железе (диагностика по SSH) Livox MID360 НЕ обнаружен, а RealSense
+# D435 подтверждён рабочим и уже используется в yolo_coffee.py для чашки.
+# Даём ObstacleMonitor тот же интерфейс get_points(), но данные — из depth-кадра
+# RealSense вместо лидара. Точность хуже (69° HFOV вместо 360° лидара, дальность
+# всего 2.5м), но лучше чем постоянный STOP из-за отсутствующего Livox.
+DEPTH_STRIDE_PX   = 16     # шаг сэмплирования по пикселям (реже = быстрее, грубее)
+CAM_MOUNT_HEIGHT_M = 1.1   # плейсхолдер высоты камеры над полом — сверить на роботе
+DEPTH_HFOV_DEG    = 69.0   # горизонтальный FOV RGB-модуля D435 (см. yolo_coffee.py)
+DEPTH_VFOV_DEG    = 42.0   # вертикальный FOV D435 (паспортное значение)
+
+
+class RealSenseObstacleSource:
+    """Тот же интерфейс что LidarSource (init/get_points), но через depth D435."""
+
+    def __init__(self):
+        self._cam = None
+        self._initialised = False
+
+    def init(self) -> bool:
+        try:
+            from yolo_coffee import RealSenseCamera
+        except ImportError as e:
+            log.error(f"yolo_coffee.RealSenseCamera недоступен: {e}")
+            return False
+        self._cam = RealSenseCamera()
+        self._initialised = self._cam.start()
+        if self._initialised:
+            log.info("RealSenseObstacleSource: используем D435 depth вместо Livox")
+        return self._initialised
+
+    def get_points(self) -> Optional[np.ndarray]:
+        if not self._initialised:
+            return None
+        frames = self._cam.get_frames()
+        if frames is None:
+            return None
+        _, depth = frames
+        h, w = depth.shape
+
+        ys = np.arange(0, h, DEPTH_STRIDE_PX)
+        xs = np.arange(0, w, DEPTH_STRIDE_PX)
+        grid_x, grid_y = np.meshgrid(xs, ys)
+        d = depth[grid_y, grid_x]
+        valid = (d > 0.1) & (d < 2.5)
+        if not np.any(valid):
+            return np.empty((0, 3))
+
+        # Пинхол-проекция: угол пикселя от центра кадра по HFOV/VFOV → x,y,z в
+        # системе робота (x=вперёд, y=влево, z=вверх), depth ~= расстояние вперёд.
+        hfov, vfov = math.radians(DEPTH_HFOV_DEG), math.radians(DEPTH_VFOV_DEG)
+        px_ang_x = ((grid_x - w / 2) / w) * hfov      # + = вправо от камеры
+        px_ang_y = ((grid_y - h / 2) / h) * vfov      # + = вниз от камеры
+
+        depth_v = d[valid]
+        ang_x_v = px_ang_x[valid]
+        ang_y_v = px_ang_y[valid]
+
+        robot_x = depth_v * np.cos(ang_x_v)                          # вперёд
+        robot_y = -depth_v * np.sin(ang_x_v)                         # влево (камера вправо => минус)
+        robot_z = CAM_MOUNT_HEIGHT_M - depth_v * np.sin(ang_y_v)      # вверх от пола
+
+        return np.stack([robot_x, robot_y, robot_z], axis=1)
+
+
+class CompositeObstacleSource:
+    """
+    Пробует настоящий Livox первым (LidarSource), если недоступен — падает на
+    RealSense depth. Не хардкодим "лидара нет" навсегда: если его переподключат/
+    прошивку поправят, LidarSource.init() сам начнёт возвращать True.
+    """
+
+    def __init__(self, interface: str = "eth0"):
+        self._lidar = LidarSource(interface)
+        self._realsense = RealSenseObstacleSource()
+        self._active = None
+        self._initialised = False
+
+    def init(self) -> bool:
+        if self._lidar.init():
+            self._active = self._lidar
+            self._initialised = True
+            log.info("CompositeObstacleSource: активен Livox")
+            return True
+        log.warning("CompositeObstacleSource: Livox недоступен, пробуем RealSense depth")
+        if self._realsense.init():
+            self._active = self._realsense
+            self._initialised = True
+            log.info("CompositeObstacleSource: активен RealSense depth (fallback)")
+            return True
+        log.error("CompositeObstacleSource: ни Livox, ни RealSense недоступны — остаёмся в safe-STOP")
+        self._initialised = False
+        return False
+
+    def get_points(self) -> Optional[np.ndarray]:
+        if self._active is None:
+            return None
+        return self._active.get_points()
 
 
 # -----------------------------------------------------------------------------

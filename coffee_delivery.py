@@ -29,9 +29,10 @@ from typing import Optional
 import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lidar_obstacle import LidarSource, ObstacleMonitor, ObstacleState
+from lidar_obstacle import CompositeObstacleSource, ObstacleMonitor, ObstacleState
 from yolo_coffee import CoffeeVision, CupDetection
 from force_sensor import HandController, GripController, FORCE_GRIP_LIGHT, FORCE_TOO_HARD, GripState
+from path_recorder import OdomSource, PathReplayer, Track
 
 log = logging.getLogger("coffee_delivery")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -43,6 +44,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 RAG_URL      = os.environ.get("RAG_URL", "http://127.0.0.1:8000")
 TTS_URL      = os.environ.get("TTS_URL", "http://127.0.0.1:8001")
 G1_INTERFACE = os.environ.get("G1_INTERFACE", "eth0")
+
+# Максимально простой сценарий "по меткам": один раз вручную (пультом) проводим
+# робота туда и обратно, path_recorder.py пишет трек. Дальше просто повторяем
+# записанное вместо того чтобы "искать путь" вживую — самое надёжное для демо.
+# Если файлов нет — сценарий сам падает на старое поведение (вслепую вперёд +
+# поиск чашки по камере), см. _run_scenario ниже.
+TRACKS_DIR       = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tracks")
+TRACK_THERE_PATH = os.path.join(TRACKS_DIR, "there.json")
+TRACK_BACK_PATH  = os.path.join(TRACKS_DIR, "back.json")
 
 VX_FORWARD   = 0.25
 VX_BACKWARD  = 0.15
@@ -338,11 +348,15 @@ class CoffeeDelivery:
     def __init__(self):
         self.mover = G1Mover()
         self.audio = G1Audio()
-        self.lidar = LidarSource()
+        self.lidar = CompositeObstacleSource()
         self.monitor = ObstacleMonitor(self.lidar)
         self.vision = CoffeeVision()
         self.hand = HandController()
         self.grip = GripController(self.hand, hand_used="right")
+        self.odom = OdomSource()
+        self.replayer: Optional[PathReplayer] = None
+        self.track_there: Optional[Track] = None
+        self.track_back: Optional[Track] = None
         self._abort = threading.Event()
         self._busy = threading.Lock()
 
@@ -360,6 +374,11 @@ class CoffeeDelivery:
             self.monitor.start_background()
         # Vision
         v_ok = self.vision.init()
+        # Одометрия + записанные треки (см. path_recorder.py — "метки" из пульта)
+        o_ok = self.odom.init()
+        self.replayer = PathReplayer(self.mover, self.monitor, self.odom)
+        self.track_there = self._load_track(TRACK_THERE_PATH)
+        self.track_back = self._load_track(TRACK_BACK_PATH)
 
         if a_ok:
             self.audio.set_volume(100)
@@ -368,8 +387,23 @@ class CoffeeDelivery:
 
         return {
             "mover": m_ok, "audio": a_ok, "lidar": l_ok,
-            "vision": v_ok, "hand": h_ok,
+            "vision": v_ok, "hand": h_ok, "odom": o_ok,
+            "track_there": self.track_there is not None,
+            "track_back": self.track_back is not None,
         }
+
+    @staticmethod
+    def _load_track(path: str) -> Optional[Track]:
+        if not os.path.exists(path):
+            return None
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                track = Track.from_json(json.load(f))
+            log.info(f"Трек загружен: {path} ({track.mode}, {len(track.waypoints)} точек)")
+            return track
+        except Exception as e:
+            log.warning(f"Не удалось загрузить трек {path}: {e}")
+            return None
 
     def abort(self):
         log.warning("ABORT requested")
@@ -408,26 +442,45 @@ class CoffeeDelivery:
         self.audio.set_led(LED_GO)
         self.mover.stand_up()
 
-        # 3. Идём вперёд и ищем чашку
-        log.info("Поиск чашки...")
+        # 3. Едем к чашке — если есть записанный трек (tracks/there.json,
+        # см. path_recorder.py), просто повторяем его: надёжнее чем "искать
+        # путь" вслепую по камере. Без трека — старое поведение (вперёд+камера).
         cup_found = False
-        t_find_start = time.time()
-        while time.time() - t_find_start < TIMEOUT_FIND_CUP_S:
-            if self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
-            obs = self.monitor.get_state()
-            if obs.state == ObstacleState.STOP:
-                self.mover.stop_move()
-                self.audio.set_led(LED_WARN)
-                speak(self.audio, "Бля, тут кто-то стоит... дай пройти.", led_during=LED_WARN)
-                if not self.monitor.wait_until_clear(timeout_s=5.0):
-                    self.mover.move(vx=0, vy=0, vyaw=VYAW_TURN, duration_s=1.5, monitor=self.monitor)
-                continue
-            self.mover.move(vx=VX_FORWARD, vy=0, vyaw=0, duration_s=0.5, monitor=self.monitor)
-            det = self.vision.detect_once()
-            if det.detected and det.distance_m is not None:
-                log.info(f"Чашка найдена: {det.message}")
-                cup_found = True
-                break
+        if self.track_there is not None:
+            log.info("Едем по записанному треку 'there'...")
+            replay_result = self.replayer.replay(self.track_there)
+            log.info(f"Трек 'there': {replay_result}")
+            if not replay_result.get("ok"):
+                speak(self.audio, f"Затупил по дороге, {recipient}. {replay_result.get('message', '')}",
+                      led_during=LED_ERROR)
+                return {"ok": False, "stage": "track_there", "message": replay_result.get("message", "")}
+            # На месте — короткая проверка камерой, чашка должна быть уже рядом
+            for _ in range(10):
+                if self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
+                det = self.vision.detect_once()
+                if det.detected and det.distance_m is not None:
+                    cup_found = True
+                    break
+                time.sleep(0.3)
+        else:
+            log.info("Поиск чашки (трек не записан, идём вслепую+камера)...")
+            t_find_start = time.time()
+            while time.time() - t_find_start < TIMEOUT_FIND_CUP_S:
+                if self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
+                obs = self.monitor.get_state()
+                if obs.state == ObstacleState.STOP:
+                    self.mover.stop_move()
+                    self.audio.set_led(LED_WARN)
+                    speak(self.audio, "Бля, тут кто-то стоит... дай пройти.", led_during=LED_WARN)
+                    if not self.monitor.wait_until_clear(timeout_s=5.0):
+                        self.mover.move(vx=0, vy=0, vyaw=VYAW_TURN, duration_s=1.5, monitor=self.monitor)
+                    continue
+                self.mover.move(vx=VX_FORWARD, vy=0, vyaw=0, duration_s=0.5, monitor=self.monitor)
+                det = self.vision.detect_once()
+                if det.detected and det.distance_m is not None:
+                    log.info(f"Чашка найдена: {det.message}")
+                    cup_found = True
+                    break
 
         if not cup_found:
             speak(self.audio, f"Не вижу никакой чашки, {recipient}. Где кофе-то?", led_during=LED_ERROR)
@@ -476,38 +529,51 @@ class CoffeeDelivery:
         self.audio.set_led(LED_GRIPPED)
         speak(self.audio, "Взял. Сейчас принесу.", led_during=LED_GRIPPED)
 
-        # 6. Разворот 180°
-        log.info("Разворот...")
+        # 6-7. Обратно — если есть записанный трек (tracks/back.json), он уже
+        # включает нужный разворот (человек его так и провёл руками), просто
+        # повторяем целиком. Без трека — старое поведение (жёсткий 180° + 3с вперёд).
         if not self.grip.check_grip_alive():
             speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
-            return {"ok": False, "stage": "drop_during_turn", "message": "выронил при развороте"}
-        self.mover.move(vx=0, vy=0, vyaw=VYAW_TURN, duration_s=3.5, monitor=self.monitor)
-        if not self.grip.check_grip_alive():
-            speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
-            return {"ok": False, "stage": "drop_after_turn", "message": "выронил после разворота"}
+            return {"ok": False, "stage": "drop_before_return", "message": "выронил перед возвратом"}
 
-        # 7. Возврат
-        log.info("Возврат...")
-        t_return_start = time.time()
-        returned = False
-        while time.time() - t_return_start < TIMEOUT_RETURN_S:
-            if self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
+        if self.track_back is not None:
+            log.info("Едем по записанному треку 'back'...")
+            replay_result = self.replayer.replay(self.track_back)
+            log.info(f"Трек 'back': {replay_result}")
             if not self.grip.check_grip_alive():
                 speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
                 return {"ok": False, "stage": "drop_during_return", "message": "выронил на обратном пути"}
-            obs = self.monitor.get_state()
-            if obs.state == ObstacleState.STOP:
+            if not replay_result.get("ok"):
+                speak(self.audio, f"Затупил на обратном пути, {recipient}.", led_during=LED_ERROR)
+                return {"ok": False, "stage": "track_back", "message": replay_result.get("message", "")}
+        else:
+            log.info("Разворот (трек не записан)...")
+            self.mover.move(vx=0, vy=0, vyaw=VYAW_TURN, duration_s=3.5, monitor=self.monitor)
+            if not self.grip.check_grip_alive():
+                speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
+                return {"ok": False, "stage": "drop_after_turn", "message": "выронил после разворота"}
+
+            log.info("Возврат (трек не записан, идём вслепую 3с)...")
+            t_return_start = time.time()
+            returned = False
+            while time.time() - t_return_start < TIMEOUT_RETURN_S:
+                if self._check_abort(): return {"ok": False, "stage": "abort", "message": "aborted"}
+                if not self.grip.check_grip_alive():
+                    speak(self.audio, "Ой... выронил, бля.", led_during=LED_ERROR)
+                    return {"ok": False, "stage": "drop_during_return", "message": "выронил на обратном пути"}
+                obs = self.monitor.get_state()
+                if obs.state == ObstacleState.STOP:
+                    self.mover.stop_move()
+                    speak(self.audio, "Стою, кто-то на пути.", led_during=LED_WARN)
+                    self.monitor.wait_until_clear(timeout_s=3.0)
+                    continue
+                self.mover.move(vx=VX_FORWARD, vy=0, vyaw=0, duration_s=0.5, monitor=self.monitor)
+                if time.time() - t_return_start > 3.0:
+                    self.mover.stop_move()
+                    returned = True
+                    break
+            if not returned:
                 self.mover.stop_move()
-                speak(self.audio, "Стою, кто-то на пути.", led_during=LED_WARN)
-                self.monitor.wait_until_clear(timeout_s=3.0)
-                continue
-            self.mover.move(vx=VX_FORWARD, vy=0, vyaw=0, duration_s=0.5, monitor=self.monitor)
-            if time.time() - t_return_start > 3.0:
-                self.mover.stop_move()
-                returned = True
-                break
-        if not returned:
-            self.mover.stop_move()
 
         # 8. Поставить
         log.info("Постановка чашки...")

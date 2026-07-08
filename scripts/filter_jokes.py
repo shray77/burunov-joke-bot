@@ -293,7 +293,7 @@ def main():
     with out.open('w', encoding='utf-8') as f:
         for r in kept_records:
             f.write(json.dumps(r, ensure_ascii=False) + '\n')
-    print(f"\n✅ Записано: {out} ({kept} записей)")
+    print(f"\nЗаписано: {out} ({kept} записей)")
 
     # Статистика по источникам
     src_counter = Counter(r['source'] for r in kept_records)

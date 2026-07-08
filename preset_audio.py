@@ -17,6 +17,7 @@ manifest.json, поле format), ресэмплены под AudioClient.PlayStr
 from __future__ import annotations
 
 import json
+import random
 import wave
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,6 +32,7 @@ class Preset:
     text: str
     duration_s: float
     path: Path
+    topic: Optional[str] = None
 
 
 def _load_manifest() -> dict:
@@ -58,7 +60,8 @@ def list_presets() -> list[Preset]:
     out = []
     for p in m["presets"]:
         path = PRESET_DIR / p["file"]
-        out.append(Preset(name=p["name"], text=p["text"], duration_s=p["duration_s"], path=path))
+        out.append(Preset(name=p["name"], text=p["text"], duration_s=p["duration_s"],
+                           path=path, topic=p.get("topic")))
     return out
 
 
@@ -103,6 +106,35 @@ COFFEE_PRESETS = {
     "dropped": "coffee_dropped",
     "done": "coffee_done",
 }
+
+
+def topics_available() -> dict[str, list[str]]:
+    """
+    Динамическая группировка "тема -> список имён пресетов с готовым звуком",
+    построенная из manifest.json (поле "topic"), а не из хардкода.
+
+    Изначально (5 тем × 1 анекдот) это то же самое что JOKE_TOPIC_PRESETS.
+    После scripts/select_curated_jokes.py + Colab-озвучки +
+    scripts/add_curated_presets_to_manifest.py тут появляются темы с
+    несколькими анекдотами — тогда get_random_preset_for_topic() начинает
+    реально выбирать между ними, а не всегда отдавать один и тот же файл.
+    Исключаем "*_intro" — это вступительные реплики, не сами анекдоты.
+    """
+    out: dict[str, list[str]] = {}
+    for p in list_presets():
+        if p.topic is None or p.name.endswith("_intro"):
+            continue
+        out.setdefault(p.topic, []).append(p.name)
+    return out
+
+
+def get_random_preset_for_topic(topic: str) -> Optional[str]:
+    """Случайный анекдот-пресет для темы (реальная вариативность, если их
+    несколько), либо None если под тему нет готового звука."""
+    names = topics_available().get(topic)
+    if not names:
+        return None
+    return random.choice(names)
 
 
 if __name__ == "__main__":

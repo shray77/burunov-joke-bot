@@ -35,3 +35,7 @@ Thumbs.db
 data/jokes_clean.jsonl
 data/jokes_filtered.jsonl
 data/jokes_raw.json
+
+# Записанные треки (path_recorder.py) — привязаны к конкретной площадке/демо,
+# каждый раз пишутся заново руками на месте, не общий репо-контент.
+tracks/
