@@ -59,25 +59,24 @@ pip install --upgrade pip wheel setuptools
 # ─── 2. PyTorch — ARM64 wheel от NVIDIA (НЕ с обычного PyPI) ─────────
 # Официальная дока: https://docs.nvidia.com/deeplearning/frameworks/install-pytorch-jetson-platform/
 # jp/v51 = JetPack 5.1.x, cu114 = CUDA 11.4 (подтверждено на этом железе).
+# jetson-ai-lab community-индекс пустой для jp5/cu114+cp38 — проверено на
+# этом железе (ERROR: no versions). Ставим напрямую официальный wheel NVIDIA:
+# единственный под cp38/aarch64 в jp/v51/pytorch/ — torch 2.0.0a0+nv23.03.
 TORCH_INDEX_JP="v51"
+TORCH_WHEEL="torch-2.0.0a0+8aa34602.nv23.03-cp38-cp38-linux_aarch64.whl"
 echo "=== Установка PyTorch (JetPack index: $TORCH_INDEX_JP) ==="
 # numpy==1.26.1 (из доки NVIDIA) требует Python>=3.9 — на этом железе
 # python3.8.10 (JetPack 5.1.1), доступный максимум для 3.8 — 1.24.x.
 pip install "numpy<1.25,>=1.22"
 
-# Пытаемся через community-индекс jetson-ai-lab (проще, но не 100% что
-# путь актуален для JP5 на момент реального запуска — если 404, см. fallback).
-if pip install --index-url "https://pypi.jetson-ai-lab.io/jp5/cu114" torch torchaudio 2>/tmp/torch_install.log; then
-    echo "✅ torch встал через jetson-ai-lab индекс"
-else
-    echo "⚠️ jetson-ai-lab индекс не сработал, пробуем официальный NVIDIA wheel напрямую"
-    cat /tmp/torch_install.log
-    echo "Найди актуальный .whl тут для своей связки JetPack+python3:"
-    echo "  https://developer.download.nvidia.com/compute/redist/jp/${TORCH_INDEX_JP}/pytorch/"
-    echo "и поставь руками:"
-    echo "  pip install --no-cache <URL_НА_WHL_ФАЙЛ>"
-    exit 1
-fi
+echo "=== Скачивание $TORCH_WHEEL ==="
+wget -q "https://developer.download.nvidia.com/compute/redist/jp/${TORCH_INDEX_JP}/pytorch/${TORCH_WHEEL}" -O "/tmp/${TORCH_WHEEL}"
+pip install --no-cache "/tmp/${TORCH_WHEEL}"
+# torchaudio: NVIDIA не публикует готовый wheel в этой же папке для JP5 —
+# пробуем через pip как есть (может подтянуться CPU-сборка или собраться
+# из исходников; если совсем не встанет, coqui-tts может частично работать
+# и без torchaudio — увидим по следующей ошибке, если будет).
+pip install torchaudio 2>&1 | tail -10 || echo "⚠️ torchaudio не встал — продолжаем без него, посмотрим упадёт ли coqui-tts"
 
 echo "=== Проверка CUDA ==="
 python3 -c "import torch; print(f'torch {torch.__version__}, CUDA: {torch.cuda.is_available()}')"
