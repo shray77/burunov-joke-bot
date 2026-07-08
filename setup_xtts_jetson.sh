@@ -61,7 +61,9 @@ pip install --upgrade pip wheel setuptools
 # jp/v51 = JetPack 5.1.x, cu114 = CUDA 11.4 (подтверждено на этом железе).
 TORCH_INDEX_JP="v51"
 echo "=== Установка PyTorch (JetPack index: $TORCH_INDEX_JP) ==="
-pip install numpy=='1.26.1'
+# numpy==1.26.1 (из доки NVIDIA) требует Python>=3.9 — на этом железе
+# python3.8.10 (JetPack 5.1.1), доступный максимум для 3.8 — 1.24.x.
+pip install "numpy<1.25,>=1.22"
 
 # Пытаемся через community-индекс jetson-ai-lab (проще, но не 100% что
 # путь актуален для JP5 на момент реального запуска — если 404, см. fallback).
