@@ -6,35 +6,27 @@ path_recorder.py — "запись трека через пульт": челов
 Teach-and-repeat — стандартный обходной манёвр: один раз проходим маршрут
 руками (кухня → получатель кофе), пишем трек, дальше просто повторяем его.
 
-Источник одометрии: DDS-топик rt/odommodestate (см. unitree_docs/dds_services.json,
-group "go2", тип "IMUState_", в доке помечен как "Get odometry information").
+Источник одометрии: DDS-топик rt/lowstate (unitree_hg.msg.dds_.LowState_),
+поле imu_state.rpy[2] = курс (yaw).
 
-TODO_SDK — ВАЖНАЯ НЕОПРЕДЕЛЁННОСТЬ, непроверено на реальном железе:
-  Название типа "IMUState_" наводит на то, что там может быть ТОЛЬКО ориентация
-  (rpy/gyro/accel), а не абсолютная (x,y) позиция — чистый IMU без интеграции
-  координат. Пока не проверено на G1 (см. unitree_sdk2py.idl.unitree_go.msg.dds_).
-  Поэтому:
-    1. OdomSource._extract_pose() перебирает несколько вероятных имён полей
-       и логирует, что реально нашёл в сообщении — вместо того чтобы гадать.
-    2. Replayer поддерживает ДВА режима, выбирает автоматически по тому что
-       записалось:
-         - "xy"  — есть x/y → полноценное path-following по координатам
-         - "yaw" — есть только курс (yaw/rpy.z) → повтор как "поворачивай на
-                   записанные курсы, иди вперёд той же длительностью", без
-                   точного позиционирования, но всё равно повторяет маршрут
-                   с поворотами вокруг мебели/препятствий.
-  Проверить реальные поля на следующей SSH-сессии:
-    python3 -c "
-    from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelSubscriber
-    from unitree_sdk2py.idl.unitree_go.msg.dds_ import IMUState_
-    ChannelFactoryInitialize(0, 'eth0')
-    def cb(msg): print(vars(msg) if hasattr(msg,'__dict__') else msg);
-    sub = ChannelSubscriber('rt/odommodestate', IMUState_)
-    sub.Init(cb, 1)
-    import time; time.sleep(3)
-    "
-  Если импорт unitree_go.msg.dds_.IMUState_ не тот — искать в
-  unitree_sdk2py/idl/ на роботе (`find / -iname '*imustate*' 2>/dev/null`).
+ИСТОРИЯ РЕШЕНИЯ (проверено на реальном роботе, 2026-07-10):
+  Изначально рассчитывали на rt/odommodestate (unitree_go.msg.dds_.IMUState_,
+  в доке dds_services.json помечен как "Get odometry information") — но на
+  практике этот топик НЕ публикуется вообще (0 сообщений за 5 секунд слушания
+  в правильном DDS-домене, домен 0, тот же что ChannelFactoryInitialize(0, iface)).
+  Дело не в разборе полей — публикатора для этого топика просто нет в эфире.
+
+  Переключились на rt/lowstate — подтверждённо публикуется (2929 сообщений за
+  3 секунды), и imu_state.rpy даёт реальный курс. Абсолютной (x,y) позиции
+  там нет (это чистый IMU, без интеграции координат) — поэтому запись всегда
+  идёт в режиме "yaw" (см. Replayer._replay_yaw_timed): повтор как "поворачивай
+  на записанные курсы, иди вперёд той же длительностью", без точного
+  позиционирования, но повторяет маршрут с поворотами вокруг мебели/препятствий.
+
+  Если позже понадобится X/Y — проверить rt/sportmodestate (по официальной
+  доке даёт только fsm_id/fsm_mode/task_id/task_time, НЕ позицию — уже
+  проверено что бесполезно для этой цели) или спросить организаторов, есть
+  ли на этом G1 вообще рабочая одометрия/SLAM.
 
 Запуск:
   python3 path_recorder.py --mode record --file tracks/kitchen_to_oleg.json --duration 30
@@ -99,7 +91,8 @@ class Track:
 
 
 # -----------------------------------------------------------------------------
-# OdomSource — подписка на rt/odommodestate
+# OdomSource — подписка на rt/lowstate (только курс, rt/odommodestate мёртв —
+# см. историю решения в шапке файла)
 # -----------------------------------------------------------------------------
 class OdomSource:
     def __init__(self, interface: str = G1_INTERFACE):
@@ -112,17 +105,16 @@ class OdomSource:
     def init(self) -> bool:
         try:
             from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelSubscriber
-            from unitree_sdk2py.idl.unitree_go.msg.dds_ import IMUState_
+            from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowState_
 
             ChannelFactoryInitialize(0, self.interface)
-            self._sub = ChannelSubscriber("rt/odommodestate", IMUState_)
+            self._sub = ChannelSubscriber("rt/lowstate", LowState_)
             self._sub.Init(self._on_msg, 1)
             self._initialised = True
-            log.info("OdomSource подписан на rt/odommodestate")
+            log.info("OdomSource подписан на rt/lowstate (курс из imu_state.rpy)")
             return True
         except ImportError as e:
-            log.error(f"unitree_sdk2py / IMUState_ недоступны: {e}")
-            log.error("Проверить путь импорта на роботе — см. TODO_SDK в шапке файла")
+            log.error(f"unitree_sdk2py / LowState_ недоступны: {e}")
             return False
         except Exception as e:
             log.error(f"OdomSource init failed: {e}")
@@ -186,7 +178,7 @@ class OdomSource:
         with self._lock:
             msg = self._last_msg
         if msg is None:
-            return "(нет сообщений с rt/odommodestate)"
+            return "(нет сообщений с rt/lowstate)"
         if hasattr(msg, "__dict__"):
             return json.dumps(vars(msg), default=str, ensure_ascii=False)
         return repr(msg)
@@ -224,8 +216,8 @@ class PathRecorder:
         mode = "xy" if have_xy else ("yaw" if have_yaw else "empty")
         if mode == "empty":
             log.warning(
-                "Ни (x,y), ни yaw не нашлись в сообщениях rt/odommodestate — "
-                "см. TODO_SDK в шапке файла, поля надо проверять на живом роботе. "
+                "Ни (x,y), ни yaw не нашлись в сообщениях rt/lowstate — "
+                "см. историю решения в шапке файла. "
                 f"Последнее сырое сообщение: {self.odom.dump_raw()}"
             )
         else:
