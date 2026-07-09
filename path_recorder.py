@@ -25,9 +25,9 @@ TODO_SDK — ВАЖНАЯ НЕОПРЕДЕЛЁННОСТЬ, непроверен
                    с поворотами вокруг мебели/препятствий.
   Проверить реальные поля на следующей SSH-сессии:
     python3 -c "
-    from unitree_sdk2py.core.channel import ChannelFactory, ChannelSubscriber
+    from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelSubscriber
     from unitree_sdk2py.idl.unitree_go.msg.dds_ import IMUState_
-    ChannelFactory.Initialize(0, 'eth0')
+    ChannelFactoryInitialize(0, 'eth0')
     def cb(msg): print(vars(msg) if hasattr(msg,'__dict__') else msg);
     sub = ChannelSubscriber('rt/odommodestate', IMUState_)
     sub.Init(cb, 1)
@@ -111,10 +111,10 @@ class OdomSource:
 
     def init(self) -> bool:
         try:
-            from unitree_sdk2py.core.channel import ChannelFactory, ChannelSubscriber
+            from unitree_sdk2py.core.channel import ChannelFactoryInitialize, ChannelSubscriber
             from unitree_sdk2py.idl.unitree_go.msg.dds_ import IMUState_
 
-            ChannelFactory.Initialize(0, self.interface)
+            ChannelFactoryInitialize(0, self.interface)
             self._sub = ChannelSubscriber("rt/odommodestate", IMUState_)
             self._sub.Init(self._on_msg, 1)
             self._initialised = True

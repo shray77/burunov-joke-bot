@@ -71,12 +71,18 @@ class AudioClient:
 
     def _init_sdk(self):
         """Инициализация unitree_sdk2 AudioClient."""
-        from unitree_sdk2py.core.channel import ChannelFactory
+        from unitree_sdk2py.core.channel import ChannelFactoryInitialize
         from unitree_sdk2py.g1.audio.audio_client import AudioClient as SDKAudioClient
 
         # Инициализация DDS-канала
-        ChannelFactory.Initialize(0, self.network_interface)
-        ChannelFactory.SetNetworkLevel(0)  # 0 = физическая сеть
+        ChannelFactoryInitialize(0, self.network_interface)
+        # SetNetworkLevel НЕ подтверждён — не встречается ни в одном реально
+        # проверенном на роботе файле (coffee_delivery.py, g1_cup_solution_package).
+        # Похоже этот файл (unitree_audio.py) вообще не используется —
+        # coffee_delivery.py несёт свою встроенную G1Audio с проверенными
+        # импортами (g1.audio.g1_audio_client, НЕ g1.audio.audio_client как
+        # тут строкой выше). Если что-то реально вызывает этот класс — сначала
+        # проверить оба несоответствия, не просто убрать строку.
 
         self._sdk_client = SDKAudioClient()
         self._sdk_client.Init()

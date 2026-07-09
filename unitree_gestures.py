@@ -76,12 +76,13 @@ class LocoController:
             self._available = False
 
     def _init_sdk(self):
-        from unitree_sdk2py.core.channel import ChannelFactory
-        from unitree_sdk2py.g1.loco.loco_client import LocoClient
+        from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+        from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
 
-        # ChannelFactory уже инициализирован в AudioClient — реинициализация
-        # в unitree_sdk2 безопасна (singleton)
-        ChannelFactory.Initialize(0, self.network_interface)
+        # Повторный вызов ChannelFactoryInitialize из другого класса тут не
+        # переверифицирован под правильную функцию (см. coffee_delivery.py
+        # G1Audio.init() — тот же вопрос).
+        ChannelFactoryInitialize(0, self.network_interface)
 
         self._loco = LocoClient()
         self._loco.Init()

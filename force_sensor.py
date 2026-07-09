@@ -113,8 +113,8 @@ class HandController:
     def init(self) -> bool:
         """Инициализация ChannelFactory + HandClient."""
         try:
-            from unitree_sdk2py.core.channel import ChannelFactory
-            ChannelFactory.Initialize(0, self.interface)
+            from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+            ChannelFactoryInitialize(0, self.interface)
 
             if self.hand_type == "RH56DFTP":
                 from unitree_sdk2py.g1.hand.hand_client import HandClient

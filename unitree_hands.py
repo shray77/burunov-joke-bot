@@ -88,9 +88,9 @@ class HandController:
 
     def _init_sdk(self):
         """Инициализация под конкретную модель руки."""
-        from unitree_sdk2py.core.channel import ChannelFactory
+        from unitree_sdk2py.core.channel import ChannelFactoryInitialize
 
-        ChannelFactory.Initialize(0, self.network_interface)
+        ChannelFactoryInitialize(0, self.network_interface)
 
         if self.hand_type == "RH56DFTP":
             # Inspire FTP dexterity hand

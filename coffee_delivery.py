@@ -90,8 +90,8 @@ class G1Mover:
 
     def init(self) -> bool:
         try:
-            from unitree_sdk2py.core.channel import ChannelFactory
-            ChannelFactory.Initialize(0, self.interface)
+            from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+            ChannelFactoryInitialize(0, self.interface)
 
             from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
             self._client = LocoClient()
@@ -219,10 +219,14 @@ class G1Audio:
 
     def init(self) -> bool:
         try:
-            # ChannelFactory уже инициализирован в G1Mover.init() —
-            # но на всякий случай повторно вызываем (это безопасно)
-            from unitree_sdk2py.core.channel import ChannelFactory
-            ChannelFactory.Initialize(0, self.interface)
+            # ChannelFactory уже инициализирован в G1Mover.init() — повторный
+            # вызов тут был написан в расчёте на "безопасно повторно", но это
+            # проверялось под неверным API (ChannelFactory.Initialize вместо
+            # реального ChannelFactoryInitialize — см. фикс ниже). Повторный
+            # вызов НЕ переверифицирован под правильную функцию — если тут
+            # упадёт при тесте на роботе, это первое что проверять.
+            from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+            ChannelFactoryInitialize(0, self.interface)
 
             from unitree_sdk2py.g1.audio.g1_audio_client import AudioClient
             self._client = AudioClient()
