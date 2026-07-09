@@ -98,7 +98,7 @@ class G1Mover:
             self._client.Init()
             # Войти в main operation control
             ret = self._client.Start()
-            if ret != 0:
+            if ret not in (0, None):
                 log.error(f"LocoClient.Start() failed: {ret}")
                 return False
             self._initialised = True
