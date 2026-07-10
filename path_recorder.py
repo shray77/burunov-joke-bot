@@ -322,8 +322,13 @@ class PathReplayer:
             if wp.yaw is not None:
                 yaw_err = _normalize_angle(wp.yaw - prev_yaw)
                 if abs(yaw_err) > 0.05:
-                    vyaw = max(-self.XY_MAX_VYAW, min(self.XY_MAX_VYAW, yaw_err))
-                    self.mover.move(vx=0.0, vy=0.0, vyaw=vyaw, duration_s=self.YAW_STEP_DURATION_S, monitor=self.monitor)
+                    # БЫЛО: yaw_err использовался напрямую как угловая скорость
+                    # (рад/с) на фиксированные 0.4с — реальный поворот получался
+                    # vyaw*0.4, никак не связан с записанным углом. Теперь:
+                    # время = угол / скорость, чтобы повернуть РОВНО на yaw_err.
+                    vyaw = self.XY_MAX_VYAW if yaw_err > 0 else -self.XY_MAX_VYAW
+                    turn_duration = min(abs(yaw_err) / self.XY_MAX_VYAW, 3.0)
+                    self.mover.move(vx=0.0, vy=0.0, vyaw=vyaw, duration_s=turn_duration, monitor=self.monitor)
                 prev_yaw = wp.yaw
             if dt > 0.05:
                 self.mover.move(vx=self.yaw_replay_vx, vy=0.0, vyaw=0.0, duration_s=min(dt, 2.0), monitor=self.monitor)
