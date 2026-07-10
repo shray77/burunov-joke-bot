@@ -250,10 +250,17 @@ class PathReplayer:
     XY_MAX_VYAW = 0.4
     YAW_STEP_DURATION_S = 0.4  # длительность одного "шага" в yaw-режиме
 
-    def __init__(self, mover, monitor=None, odom: Optional[OdomSource] = None):
+    def __init__(self, mover, monitor=None, odom: Optional[OdomSource] = None,
+                 yaw_replay_vx: float = 0.175):
         self.mover = mover
         self.monitor = monitor
         self.odom = odom
+        # Скорость вперёд в yaw-режиме повтора. Запись делается пультом — человек
+        # обычно ведёт быстрее, чем "безопасная" скриптовая скорость, поэтому
+        # повтор по тем же временнЫм интервалам может пройти МЕНЬШЕ реальной
+        # дистанции, чем было записано. Крутить этот параметр — самый быстрый
+        # способ подогнать пройденное расстояние под записанное (см. --replay-vx).
+        self.yaw_replay_vx = yaw_replay_vx
 
     def replay(self, track: Track) -> dict:
         if track.mode == "empty" or not track.waypoints:
@@ -319,7 +326,7 @@ class PathReplayer:
                     self.mover.move(vx=0.0, vy=0.0, vyaw=vyaw, duration_s=self.YAW_STEP_DURATION_S, monitor=self.monitor)
                 prev_yaw = wp.yaw
             if dt > 0.05:
-                self.mover.move(vx=self.XY_MAX_VX * 0.7, vy=0.0, vyaw=0.0, duration_s=min(dt, 2.0), monitor=self.monitor)
+                self.mover.move(vx=self.yaw_replay_vx, vy=0.0, vyaw=0.0, duration_s=min(dt, 2.0), monitor=self.monitor)
             prev_t = wp.t
         self.mover.stop_move()
         return {"ok": True, "message": f"трек '{track.name}' повторён (yaw, без точной одометрии)"}
@@ -333,7 +340,7 @@ def _normalize_angle(a: float) -> float:
     return a
 
 
-def replay_cli(filepath: str):
+def replay_cli(filepath: str, replay_vx: float = 0.175):
     with open(filepath, "r", encoding="utf-8") as f:
         track = Track.from_json(json.load(f))
 
@@ -353,7 +360,7 @@ def replay_cli(filepath: str):
         monitor.start_background()
 
     try:
-        result = PathReplayer(mover, monitor, odom).replay(track)
+        result = PathReplayer(mover, monitor, odom, yaw_replay_vx=replay_vx).replay(track)
         log.info(json.dumps(result, ensure_ascii=False))
     finally:
         monitor.stop_background()
@@ -370,12 +377,15 @@ def main():
     p.add_argument("--file", required=True, help="путь к JSON-файлу трека")
     p.add_argument("--name", default="unnamed")
     p.add_argument("--duration", type=float, default=30.0, help="для --mode record, сек")
+    p.add_argument("--replay-vx", type=float, default=0.175,
+                    help="скорость вперёд при повторе в yaw-режиме, м/с (для --mode replay). "
+                         "Если проходит меньше записанного — увеличь; если больше — уменьши.")
     args = p.parse_args()
 
     if args.mode == "record":
         record_cli(args.name, args.file, args.duration)
     else:
-        replay_cli(args.file)
+        replay_cli(args.file, args.replay_vx)
 
 
 if __name__ == "__main__":
