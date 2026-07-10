@@ -251,10 +251,15 @@ class PathReplayer:
     YAW_STEP_DURATION_S = 0.4  # длительность одного "шага" в yaw-режиме
 
     def __init__(self, mover, monitor=None, odom: Optional[OdomSource] = None,
-                 yaw_replay_vx: float = 0.175):
+                 yaw_replay_vx: float = 0.175, yaw_sign: float = 1.0):
         self.mover = mover
         self.monitor = monitor
         self.odom = odom
+        # Известная проблема на этом роботе (см. yaw_sign в их же
+        # cup_center_then_adaptive_node.py) — легко перепутать направление
+        # поворота между командой Move(vyaw=...) и знаком IMU-курса. Если
+        # робот уходит не туда/зигзагом — сначала пробовать yaw_sign=-1.0.
+        self.yaw_sign = yaw_sign
         # Скорость вперёд в yaw-режиме повтора. Запись делается пультом — человек
         # обычно ведёт быстрее, чем "безопасная" скриптовая скорость, поэтому
         # повтор по тем же временнЫм интервалам может пройти МЕНЬШЕ реальной
@@ -326,7 +331,8 @@ class PathReplayer:
                     # (рад/с) на фиксированные 0.4с — реальный поворот получался
                     # vyaw*0.4, никак не связан с записанным углом. Теперь:
                     # время = угол / скорость, чтобы повернуть РОВНО на yaw_err.
-                    vyaw = self.XY_MAX_VYAW if yaw_err > 0 else -self.XY_MAX_VYAW
+                    sign = self.yaw_sign if yaw_err > 0 else -self.yaw_sign
+                    vyaw = self.XY_MAX_VYAW if sign > 0 else -self.XY_MAX_VYAW
                     turn_duration = min(abs(yaw_err) / self.XY_MAX_VYAW, 3.0)
                     self.mover.move(vx=0.0, vy=0.0, vyaw=vyaw, duration_s=turn_duration, monitor=self.monitor)
                 prev_yaw = wp.yaw
@@ -345,7 +351,7 @@ def _normalize_angle(a: float) -> float:
     return a
 
 
-def replay_cli(filepath: str, replay_vx: float = 0.175):
+def replay_cli(filepath: str, replay_vx: float = 0.175, yaw_sign: float = 1.0):
     with open(filepath, "r", encoding="utf-8") as f:
         track = Track.from_json(json.load(f))
 
@@ -365,7 +371,7 @@ def replay_cli(filepath: str, replay_vx: float = 0.175):
         monitor.start_background()
 
     try:
-        result = PathReplayer(mover, monitor, odom, yaw_replay_vx=replay_vx).replay(track)
+        result = PathReplayer(mover, monitor, odom, yaw_replay_vx=replay_vx, yaw_sign=yaw_sign).replay(track)
         log.info(json.dumps(result, ensure_ascii=False))
     finally:
         monitor.stop_background()
@@ -385,12 +391,14 @@ def main():
     p.add_argument("--replay-vx", type=float, default=0.175,
                     help="скорость вперёд при повторе в yaw-режиме, м/с (для --mode replay). "
                          "Если проходит меньше записанного — увеличь; если больше — уменьши.")
+    p.add_argument("--yaw-sign", type=float, default=1.0,
+                    help="1.0 или -1.0 — если робот уходит зигзагом/не туда, попробовать -1.0")
     args = p.parse_args()
 
     if args.mode == "record":
         record_cli(args.name, args.file, args.duration)
     else:
-        replay_cli(args.file, args.replay_vx)
+        replay_cli(args.file, args.replay_vx, args.yaw_sign)
 
 
 if __name__ == "__main__":
